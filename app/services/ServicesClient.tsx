@@ -7,6 +7,7 @@ import {
   Heart,
   Briefcase,
   GraduationCap,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,12 @@ export default function ServicesClient() {
   const [filteredServices, setFilteredServices] =
     useState<ServiceProvider[]>(mockServices);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilters, setActiveFilters] = useState<{
+    category?: ServiceCategory | null;
+    kanton?: string | null;
+    zipCode?: string | null;
+  }>({});
 
   // Initialize categories from mockData
   useEffect(() => {
@@ -29,32 +36,51 @@ export default function ServicesClient() {
     setCategories(uniqueCategories);
   }, []);
 
+  // Apply both filters and search
+  useEffect(() => {
+    let result = [...services];
+
+    // Apply category filter
+    if (activeFilters.category) {
+      result = result.filter(
+        (service) => service.category === activeFilters.category
+      );
+    }
+
+    // Apply kanton filter
+    if (activeFilters.kanton) {
+      result = result.filter(
+        (service) => service.kanton === activeFilters.kanton
+      );
+    }
+
+    // Apply zipCode filter
+    if (activeFilters.zipCode) {
+      result = result.filter((service) =>
+        service.zipCode.includes(activeFilters.zipCode!)
+      );
+    }
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (service) =>
+          service.name.toLowerCase().includes(query) ||
+          (service.description &&
+            service.description.toLowerCase().includes(query))
+      );
+    }
+
+    setFilteredServices(result);
+  }, [services, activeFilters, searchQuery]);
+
   const handleFilterChange = (filters: {
     category?: ServiceCategory | null;
     kanton?: string | null;
     zipCode?: string | null;
   }) => {
-    let filtered = [...services];
-
-    if (filters.category) {
-      filtered = filtered.filter(
-        (service) => service.category === filters.category
-      );
-    }
-
-    if (filters.kanton) {
-      filtered = filtered.filter(
-        (service) => service.kanton === filters.kanton
-      );
-    }
-
-    if (filters.zipCode) {
-      filtered = filtered.filter((service) =>
-        service.zipCode.includes(filters.zipCode!)
-      );
-    }
-
-    setFilteredServices(filtered);
+    setActiveFilters(filters);
   };
 
   const handleServiceView = (id: string) => {
@@ -64,19 +90,61 @@ export default function ServicesClient() {
         service.id === id ? { ...service, views: service.views + 1 } : service
       )
     );
-    setFilteredServices((prev) =>
-      prev.map((service) =>
-        service.id === id ? { ...service, views: service.views + 1 } : service
-      )
-    );
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleResetFilters = () => {
+    setActiveFilters({});
+    setSearchQuery("");
   };
 
   return (
     <div className="container mx-auto px-4 py-12">
+      {/* Information section */}
+      <div className="bg-blue-50 rounded-lg p-8 mb-12 mt-16">
+        <div className="flex items-center mb-6">
+          <FileText className="h-8 w-8 text-blue-700 mr-4 flex-shrink-0" />
+          <h2 className="text-2xl font-semibold">
+            Хочете додати свої послуги?
+          </h2>
+        </div>
+        <p className="text-gray-600 mb-6">
+          Якщо ви надаєте послуги, то можете заповнити форму нижче і ми додамо
+          вашу послугу до нашого каталогу. Так як проєкт тільки починає своє
+          життя, то додавання послуги коштує 5 CHF на місяць. До червня це все
+          через мене додається, а після червня будете мати свій профайл,
+          можливіть створювати, оплачува через платформу, та мати вже свій
+          вільний простір для того. Але хочется щоб все почало вже, бо нам це
+          потрібно! Ваш вклад у перші кроки проєкту най безцінніший!
+        </p>
+        <div className="flex justify-center">
+          <Link href="/services/add">
+            <Button>Додати свої послуги</Button>
+          </Link>
+        </div>
+      </div>
+
       <h1 className="text-3xl font-bold mb-2 text-center">Послуги</h1>
       <p className="text-gray-600 max-w-3xl mx-auto text-center mb-10">
         Каталог сервісів та послуг від українців у Швейцарії
       </p>
+
+      {/* Search bar */}
+      <div className="relative w-full mb-8 max-w-2xl mx-auto">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <Search className="w-5 h-5 text-gray-400" />
+        </div>
+        <input
+          type="search"
+          className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-indigo-500 focus:border-indigo-500"
+          placeholder="Пошук за назвою чи описом послуги..."
+          value={searchQuery}
+          onChange={handleSearch}
+        />
+      </div>
 
       {/* Service filters */}
       <ServiceFilters
@@ -115,36 +183,11 @@ export default function ServicesClient() {
           <p className="text-lg text-gray-500 mb-4">
             На жаль, послуг за вашим запитом не знайдено.
           </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setFilteredServices(services);
-            }}
-          >
+          <Button variant="outline" onClick={handleResetFilters}>
             Скинути фільтри
           </Button>
         </div>
       )}
-
-      {/* Information section */}
-      <div className="bg-blue-50 rounded-lg p-8 mb-12 mt-16">
-        <div className="flex items-center mb-6">
-          <FileText className="h-8 w-8 text-blue-700 mr-4 flex-shrink-0" />
-          <h2 className="text-2xl font-semibold">
-            Хочете додати свої послуги?
-          </h2>
-        </div>
-        <p className="text-gray-600 mb-6">
-          Якщо ви надаєте послуги, які можуть бути корисними для української
-          громади у Швейцарії, і хочете бути у нашому каталозі, додайте свою
-          послугу до нашої бази даних. Це абсолютно безкоштовно.
-        </p>
-        <div className="flex justify-center">
-          <Link href="/services/add">
-            <Button>Додати свої послуги</Button>
-          </Link>
-        </div>
-      </div>
 
       {/* Service Categories */}
       <h2 className="text-2xl font-bold mb-6 mt-12 text-center">
@@ -195,16 +238,6 @@ export default function ServicesClient() {
             </Button>
           </Link>
         </div>
-      </div>
-
-      <div className="mt-10 text-center">
-        <h2 className="text-2xl font-semibold text-primary">
-          Don&apos;t see what you&apos;re looking for?
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          Can&apos;t find the service you need? Add your own service request and
-          let providers come to you.
-        </p>
       </div>
     </div>
   );

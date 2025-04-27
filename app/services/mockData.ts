@@ -1,4 +1,4 @@
-import { ServiceProvider, ServiceCategory } from "./types";
+import { ServiceProvider } from "./types";
 
 export const SWISS_KANTONS = [
   "Zürich",
@@ -31,7 +31,7 @@ export const SWISS_KANTONS = [
 
 export const mockServices: ServiceProvider[] = [
   {
-    id: "service-1",
+    id: "1",
     name: "МайстерОК",
     category: "Домашній майстер",
     address: "Bahnhofstrasse 10",
@@ -54,7 +54,7 @@ export const mockServices: ServiceProvider[] = [
       "Надаємо широкий спектр послуг з домашнього ремонту. Працюємо швидко та якісно. Наші майстри мають багаторічний досвід.",
   },
   {
-    id: "service-2",
+    id: "2",
     name: "IT Solutions",
     category: "IT Розробка",
     address: "Langstrasse 45",
@@ -77,7 +77,7 @@ export const mockServices: ServiceProvider[] = [
       "Професійна розробка сайтів та мобільних додатків для бізнесу. Працюємо з клієнтами по всій Швейцарії. Створюємо сучасні, швидкі та зручні веб-сайти.",
   },
   {
-    id: "service-3",
+    id: "3",
     name: "CleanHome",
     category: "Клінінгові послуги",
     address: "Seestrasse 120",
@@ -98,7 +98,7 @@ export const mockServices: ServiceProvider[] = [
       "Прибирання квартир та офісів на найвищому рівні. Використовуємо професійне обладнання та екологічні засоби для чищення.",
   },
   {
-    id: "service-4",
+    id: "4",
     name: "Swiss Beauty",
     category: "Послуги краси",
     address: "Rue du Mont-Blanc 16",
@@ -122,7 +122,7 @@ export const mockServices: ServiceProvider[] = [
       "Салон краси в центрі Женеви. Майстри з України. Використовуємо якісні матеріали та інструменти. Працюємо за попереднім записом.",
   },
   {
-    id: "service-5",
+    id: "5",
     name: "UkrAuto",
     category: "Авто",
     address: "Industriestrasse 30",
@@ -144,7 +144,7 @@ export const mockServices: ServiceProvider[] = [
       "Автосервіс з українськими майстрами. Обслуговуємо всі марки автомобілів. Справедливі ціни та висока якість роботи.",
   },
   {
-    id: "service-6",
+    id: "6",
     name: "DesignUA",
     category: "Дизайн",
     address: "Online",
@@ -168,7 +168,7 @@ export const mockServices: ServiceProvider[] = [
       "Графічний дизайн будь-якої складності. Розробка логотипів, брендинг, дизайн сайтів та поліграфії. Допоможемо виділитися серед конкурентів.",
   },
   {
-    id: "service-7",
+    id: "7",
     name: "UkrTutor",
     category: "Репетитори",
     address: "Bahnhofplatz 5",
@@ -191,7 +191,7 @@ export const mockServices: ServiceProvider[] = [
       "Репетитори з України. Підготовка до екзаменів, допомога зі складними предметами. Індивідуальний підхід до кожного учня.",
   },
   {
-    id: "service-8",
+    id: "8",
     name: "Смачного",
     category: "Гастрономія",
     address: "Schwanengasse 3",

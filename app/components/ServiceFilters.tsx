@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ServiceCategory } from "../services/types";
+import { mockServices } from "../services/mockData";
 
 interface ServiceFiltersProps {
   categories: ServiceCategory[];
@@ -26,6 +27,27 @@ export const ServiceFilters: React.FC<ServiceFiltersProps> = ({
   const [zipCode, setZipCode] = useState<string>("");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showKantonDropdown, setShowKantonDropdown] = useState(false);
+  const [showZipCodeDropdown, setShowZipCodeDropdown] = useState(false);
+  const [availableZipCodes, setAvailableZipCodes] = useState<string[]>([]);
+
+  // Update available zip codes when canton changes
+  useEffect(() => {
+    if (selectedKanton) {
+      // Filter services by the selected canton and extract unique zip codes
+      const zipCodes = Array.from(
+        new Set(
+          mockServices
+            .filter((service) => service.kanton === selectedKanton)
+            .map((service) => service.zipCode)
+        )
+      ).sort();
+      setAvailableZipCodes(zipCodes);
+    } else {
+      setAvailableZipCodes([]);
+    }
+    // Reset zip code when canton changes
+    setZipCode("");
+  }, [selectedKanton]);
 
   const handleCategorySelect = (category: ServiceCategory | null) => {
     setSelectedCategory(category);
@@ -43,12 +65,18 @@ export const ServiceFilters: React.FC<ServiceFiltersProps> = ({
     onFilterChange({
       category: selectedCategory,
       kanton,
-      zipCode: zipCode || null,
+      zipCode: null, // Reset zip code when canton changes
     });
   };
 
-  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setZipCode(e.target.value);
+  const handleZipCodeSelect = (code: string) => {
+    setZipCode(code);
+    setShowZipCodeDropdown(false);
+    onFilterChange({
+      category: selectedCategory,
+      kanton: selectedKanton,
+      zipCode: code,
+    });
   };
 
   const handleZipCodeSubmit = () => {
@@ -172,26 +200,67 @@ export const ServiceFilters: React.FC<ServiceFiltersProps> = ({
         </div>
 
         {/* ZIP Code Filter */}
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Поштовий індекс
           </label>
-          <div className="flex">
-            <input
-              type="text"
-              value={zipCode}
-              onChange={handleZipCodeChange}
-              className="block w-full rounded-l-md border border-gray-300 px-4 py-2 text-sm"
-              placeholder="Введіть поштовий індекс"
-            />
-            <button
-              type="button"
-              onClick={handleZipCodeSubmit}
-              className="bg-blue-600 text-white px-4 rounded-r-md hover:bg-blue-700"
-            >
-              OK
-            </button>
+          <div className="relative">
+            <div className="flex">
+              <button
+                type="button"
+                className={`flex justify-between items-center w-full rounded-l-md border border-gray-300 px-4 py-2 bg-white text-left text-sm ${
+                  !selectedKanton ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                onClick={() =>
+                  selectedKanton && setShowZipCodeDropdown(!showZipCodeDropdown)
+                }
+                disabled={!selectedKanton}
+              >
+                <span className="truncate">{zipCode || "Виберіть індекс"}</span>
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              </button>
+              <button
+                type="button"
+                onClick={handleZipCodeSubmit}
+                className={`bg-blue-600 text-white px-4 rounded-r-md hover:bg-blue-700 ${
+                  !zipCode ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                disabled={!zipCode}
+              >
+                OK
+              </button>
+            </div>
+
+            {showZipCodeDropdown && selectedKanton && (
+              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md max-h-60 overflow-auto py-1 border border-gray-200">
+                {availableZipCodes.length > 0 ? (
+                  availableZipCodes.map((code) => (
+                    <button
+                      key={code}
+                      className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                      onClick={() => handleZipCodeSelect(code)}
+                    >
+                      <div className="flex items-center">
+                        {zipCode === code && (
+                          <Check className="h-4 w-4 mr-2 text-blue-600" />
+                        )}
+                        <span>{code}</span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    Немає доступних індексів
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+          {!selectedKanton && (
+            <p className="text-xs text-gray-500 mt-1">
+              Спочатку виберіть кантон
+            </p>
+          )}
         </div>
       </div>
 
@@ -249,7 +318,7 @@ export const ServiceFilters: React.FC<ServiceFiltersProps> = ({
             onClick={resetFilters}
             className="text-xs text-gray-600"
           >
-            Скинути всі
+            Скинути все
           </Button>
         </div>
       )}

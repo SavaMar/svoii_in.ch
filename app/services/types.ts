@@ -1,3 +1,5 @@
+import { CantonCode } from "../utils/cantons";
+
 export type ServiceCategory =
   | "Домашній майстер"
   | "Ремонт техніки"
@@ -50,7 +52,7 @@ export interface ServiceProvider {
   name: string;
   category: ServiceCategory;
   address: string;
-  kanton: string;
+  kanton: CantonCode | string;
   zipCode: string;
   instagram?: string;
   website?: string;

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { MapPin, Mail, ExternalLink } from "lucide-react";
+import { MapPin, Mail, ExternalLink, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ServiceProvider, CATEGORY_COLORS } from "../services/types";
@@ -11,8 +11,9 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-} from "@/components/ui/card";
+} from "../../components/ui/card";
 import { cn } from "@/lib/utils";
+import { getCantonName } from "../utils/cantons";
 
 interface ServiceCardProps {
   service: ServiceProvider;
@@ -89,6 +90,9 @@ export function ServiceCard({ service, onView }: ServiceCardProps) {
   const topBorderClass = getBorderTopClasses(borderClass);
   const badgeClasses = getBadgeClasses(borderClass);
 
+  // Get the full canton name
+  const cantonName = getCantonName(service.kanton);
+
   return (
     <Link
       href={`/services/${service.id}`}
@@ -106,8 +110,9 @@ export function ServiceCard({ service, onView }: ServiceCardProps) {
             <Badge className={cn(badgeClasses, "hover:bg-opacity-80")}>
               {service.category}
             </Badge>
-            <div className="text-sm text-gray-500">
-              {service.views} переглядів
+            <div className="text-sm text-gray-500 flex items-center">
+              <Eye className="h-4 w-4 mr-1" />
+              {service.views}
             </div>
           </div>
           <h3 className="font-semibold text-xl mt-2 line-clamp-2">
@@ -117,9 +122,20 @@ export function ServiceCard({ service, onView }: ServiceCardProps) {
         <CardContent className="pb-4">
           <div className="flex items-start mb-2">
             <MapPin className="h-4 w-4 text-gray-500 mr-2 mt-1" />
-            <span className="text-sm text-gray-600 line-clamp-1">
-              {service.kanton}, {service.address}
-            </span>
+            <div>
+              <div className="flex items-center mb-1">
+                <Badge
+                  variant="outline"
+                  className="text-xs px-1.5 py-0 mr-2 bg-indigo-50 border-indigo-100 text-indigo-700 font-mono"
+                >
+                  {service.kanton}
+                </Badge>
+                <span className="text-sm text-gray-600">{cantonName}</span>
+              </div>
+              <span className="text-sm text-gray-600 line-clamp-1">
+                {service.address}
+              </span>
+            </div>
           </div>
           <div className="flex items-start">
             <Mail className="h-4 w-4 text-gray-500 mr-2 mt-1" />
