@@ -5,13 +5,14 @@ import { ArrowLeft, Mail, MapPin, Phone, Heart } from "lucide-react";
 import { mockServices } from "../mockData";
 import type { Metadata } from "next";
 
+// Define params type exactly as shown in the Next.js docs
 type Props = {
-  params: {
-    id: string;
-  };
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // Find the service
   const service = mockServices.find((s) => s.id === params.id);
 
   if (!service) {
@@ -26,7 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function ServicePage({ params }: Props) {
+// Export a regular function (not an async function)
+export default function Page({ params }: Props) {
   const service = mockServices.find((s) => s.id === params.id);
 
   if (!service) {
