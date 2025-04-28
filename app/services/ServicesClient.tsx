@@ -131,6 +131,9 @@ export default function ServicesClient() {
       <p className="text-gray-600 max-w-3xl mx-auto text-center mb-10">
         Каталог сервісів та послуг від українців у Швейцарії
       </p>
+      <p className="text-red-600 max-w-3xl mx-auto text-center mb-12">
+        Всі ці послуги не справжніми і використовуються для тестування наразі.
+      </p>
 
       {/* Search bar */}
       <div className="relative w-full mb-8 max-w-2xl mx-auto">

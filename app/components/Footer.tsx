@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Facebook, Instagram, Mail, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -20,33 +20,6 @@ const Footer = () => {
               підтримує. Досить шукати по чатах, як по смітниках. Тут — усе, що
               треба, і всі, хто треба. Під одним дахом. Для своїх.
             </p>
-            <div className="flex space-x-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-300 hover:text-teal-500 transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook size={20} />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-300 hover:text-teal-500 transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram size={20} />
-              </a>
-              <a
-                href="mailto:info@swissua.org"
-                className="text-blue-300 hover:text-teal-500 transition-colors"
-                aria-label="Email"
-              >
-                <Mail size={20} />
-              </a>
-            </div>
           </div>
 
           {/* Quick Links */}
@@ -127,10 +100,10 @@ const Footer = () => {
               <div className="flex items-start">
                 <Mail className="mr-2 h-5 w-5 text-blue-300 flex-shrink-0 mt-0.5" />
                 <a
-                  href="mailto:info@swissua.org"
+                  href="mailto:svoii.in.ch@gmail.com"
                   className="hover:text-blue-400 text-neutral-300 transition-colors"
                 >
-                  info@swissua.org
+                  svoii.in.ch@gmail.com
                 </a>
               </div>
             </div>
@@ -139,9 +112,7 @@ const Footer = () => {
 
         {/* Copyright */}
         <div className="border-t border-gray-200 pt-8 mt-8 text-center text-gray-500 text-sm">
-          <p>
-            © {currentYear} Українська Спільнота Швейцарії. Усі права захищені.
-          </p>
+          <p>© {currentYear} Cвої in CH. Усі права захищені.</p>
         </div>
       </div>
     </footer>

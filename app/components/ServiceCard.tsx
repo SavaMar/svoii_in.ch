@@ -2,9 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { MapPin, Mail, ExternalLink, Eye } from "lucide-react";
+import { MapPin, Eye, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ServiceProvider, CATEGORY_COLORS } from "../services/types";
 import {
   Card,
@@ -81,8 +80,8 @@ function getBadgeClasses(borderClass: string): string {
 }
 
 export function ServiceCard({ service, onView }: ServiceCardProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleClick = () => {
+    // Count the view but don't prevent default navigation
     onView(service.id);
   };
 
@@ -107,51 +106,40 @@ export function ServiceCard({ service, onView }: ServiceCardProps) {
       >
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
-            <Badge className={cn(badgeClasses, "hover:bg-opacity-80")}>
+            <h3 className="font-semibold text-xl line-clamp-2">
+              {service.name}
+            </h3>
+            <Badge className={cn(badgeClasses, "ml-2 hover:bg-opacity-80")}>
               {service.category}
             </Badge>
-            <div className="text-sm text-gray-500 flex items-center">
-              <Eye className="h-4 w-4 mr-1" />
-              {service.views}
-            </div>
           </div>
-          <h3 className="font-semibold text-xl mt-2 line-clamp-2">
-            {service.name}
-          </h3>
         </CardHeader>
+
         <CardContent className="pb-4">
-          <div className="flex items-start mb-2">
-            <MapPin className="h-4 w-4 text-gray-500 mr-2 mt-1" />
-            <div>
-              <div className="flex items-center mb-1">
-                <Badge
-                  variant="outline"
-                  className="text-xs px-1.5 py-0 mr-2 bg-indigo-50 border-indigo-100 text-indigo-700 font-mono"
-                >
-                  {service.kanton}
-                </Badge>
-                <span className="text-sm text-gray-600">{cantonName}</span>
-              </div>
-              <span className="text-sm text-gray-600 line-clamp-1">
-                {service.address}
-              </span>
+          <div className="flex items-center">
+            <MapPin className="h-4 w-4 text-gray-500 mr-2" />
+            <div className="flex items-center">
+              <Badge
+                variant="outline"
+                className="text-xs px-1.5 py-0 mr-2 bg-indigo-50 border-indigo-100 text-indigo-700 font-mono"
+              >
+                {service.kanton}
+              </Badge>
+              <span className="text-sm text-gray-600">{cantonName}</span>
             </div>
-          </div>
-          <div className="flex items-start">
-            <Mail className="h-4 w-4 text-gray-500 mr-2 mt-1" />
-            <span className="text-sm text-gray-600 line-clamp-1">
-              {service.email}
-            </span>
           </div>
         </CardContent>
-        <CardFooter className="pt-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-between text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-          >
-            Перейти до сторінки <ExternalLink className="h-4 w-4 ml-1" />
-          </Button>
+
+        <CardFooter className="border-t pt-5 border-gray-100 flex justify-between items-center">
+          <div className="flex items-center text-sm text-gray-500">
+            <Eye className="h-4 w-4 mr-1" />
+            <span>{service.views}</span>
+          </div>
+
+          <div className="flex items-center text-sm text-gray-500">
+            <MessageCircle className="h-4 w-4 mr-1" />
+            <span>5</span>
+          </div>
         </CardFooter>
       </Card>
     </Link>
