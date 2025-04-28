@@ -59,40 +59,47 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-            <div className="bg-gray-50 p-8 rounded-xl shadow-sm">
-              <Users className="w-12 h-12 text-indigo-600 mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-gray-900">
-                Спільнота
-              </h3>
-              <p className="text-gray-600">
-                Ми збираємо події, ініціативи, ресурси та можливості для
-                співпраці.
-              </p>
-            </div>
+            <Link href="/community">
+              <div className="bg-gray-50 p-8 rounded-xl shadow-sm hover:bg-gray-100 transition-colors">
+                <Users className="w-12 h-12 text-indigo-600 mb-4" />
+                <h3 className="text-xl font-semibold mb-3 text-gray-900">
+                  Спільнота
+                </h3>
+                <p className="text-gray-600 h-24">
+                  Ми збираємо події, ініціативи, ресурси та можливості для
+                  співпраці. Приєднуйтесь до нашої спільноти, щоб бути в курсі
+                  всіх подій та можливостей.
+                </p>
+              </div>
+            </Link>
 
-            <div className="bg-gray-50 p-8 rounded-xl shadow-sm">
-              <Calendar className="w-12 h-12 text-indigo-600 mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-gray-900">
-                Події
-              </h3>
-              <p className="text-gray-600">
-                Ми збираємо події, ініціативи, воркшопи, майстер-класи,
-                благодійні акції, інші події, щоб українці відпочивали,
-                навчалися, допомагали один одному та співпрацювали. Ви можете
-                допомогти мені знайти ці події та додати їх до списку.
-              </p>
-            </div>
+            <Link href="/events">
+              <div className="bg-gray-50 p-8 rounded-xl shadow-sm hover:bg-gray-100 transition-colors">
+                <Calendar className="w-12 h-12 text-indigo-600 mb-4" />
+                <h3 className="text-xl font-semibold mb-3 text-gray-900">
+                  Події
+                </h3>
+                <p className="text-gray-600 h-24">
+                  Ми збираємо події, воркшопи, майстер-класи та благодійні акції
+                  для українців. Відпочивайте, навчайтеся та знаходьте нові
+                  знайомства.
+                </p>
+              </div>
+            </Link>
 
-            <div className="bg-gray-50 p-8 rounded-xl shadow-sm">
-              <ExternalLink className="w-12 h-12 text-indigo-600 mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-gray-900">
-                Співпраця
-              </h3>
-              <p className="text-gray-600">
-                Знайдіть людей, бізнеси та однодумців для співпраці чи
-                колаборації. Організована подача послуг від українців українцям
-              </p>
-            </div>
+            <Link href="/services">
+              <div className="bg-gray-50 p-8 rounded-xl shadow-sm hover:bg-gray-100 transition-colors">
+                <ExternalLink className="w-12 h-12 text-indigo-600 mb-4" />
+                <h3 className="text-xl font-semibold mb-3 text-gray-900">
+                  Співпраця
+                </h3>
+                <p className="text-gray-600 pb-5 h-24">
+                  Знайдіть людей, бізнеси та однодумців для співпраці.
+                  Організована подача послуг від українців для українців у
+                  Швейцарії.
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
       </section>

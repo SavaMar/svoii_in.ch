@@ -54,6 +54,7 @@ const Navbar = () => {
                 width={62}
                 height={62}
                 priority
+                unoptimized
               />
             </div>
             <span className="hidden sm:inline">СвоЇ in CH</span>
@@ -96,6 +97,7 @@ const Navbar = () => {
                     alt="SVOЇ Logo"
                     fill
                     className="object-contain"
+                    unoptimized
                   />
                 </div>
                 <span className="font-semibold text-xl">СвоЇ in CH</span>

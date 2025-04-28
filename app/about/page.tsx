@@ -29,6 +29,7 @@ export default function AboutPage() {
                   className="object-cover"
                   sizes="(max-width: 768px) 256px, 320px"
                   priority
+                  unoptimized
                 />
                 {/* Note: Replace the image above with your own photo by adding it to the public folder */}
               </div>

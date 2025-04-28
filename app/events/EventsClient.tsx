@@ -331,6 +331,7 @@ export default function EventsClient() {
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      unoptimized
                     />
                     {!event.isFree && (
                       <Badge className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm text-gray-800">

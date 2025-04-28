@@ -68,6 +68,7 @@ export function PersonCard({ member }: PersonCardProps) {
               alt={displayName}
               fill
               className="object-cover"
+              unoptimized
             />
           </div>
 
