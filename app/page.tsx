@@ -93,7 +93,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-3 text-gray-900">
                   Співпраця
                 </h3>
-                <p className="text-gray-600 pb-5 h-24">
+                <p className="text-gray-600 h-24">
                   Знайдіть людей, бізнеси та однодумців для співпраці.
                   Організована подача послуг від українців для українців у
                   Швейцарії.

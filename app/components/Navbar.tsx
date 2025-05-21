@@ -11,6 +11,9 @@ import {
   BookOpen,
   Mail,
   Info,
+  LogIn,
+  UserPlus,
+  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -20,7 +23,14 @@ import {
   SheetContent,
   SheetTrigger,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@/app/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/app/components/ui/dialog";
+import { useAuth } from "@/app/context/AuthContext";
+import { AuthForms } from "./auth/AuthForms";
 
 // Define the menu item type
 type MenuItem = {
@@ -42,8 +52,10 @@ const menuItems: MenuItem[] = [
 ];
 
 const Navbar = () => {
+  const { user, signOut } = useAuth();
+
   return (
-    <nav className="bg-whte text-black py-4 sticky top-0 z-50 shadow-sm backdrop-blur-md ">
+    <nav className="bg-whte text-black py-4 sticky top-0 z-50 shadow-sm backdrop-blur-md">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
           <Link href="/" className="text-xl font-bold flex items-center gap-2">
@@ -62,7 +74,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop menu */}
-          <div className="hidden lg:flex space-x-6">
+          <div className="hidden lg:flex items-center space-x-6">
             {menuItems
               .filter((item) => !item.mobileOnly)
               .map((item) => (
@@ -74,6 +86,50 @@ const Navbar = () => {
                   {item.label}
                 </Link>
               ))}
+
+            {/* Auth buttons */}
+            <div className="flex items-center gap-2 ml-4">
+              {user ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Вийти</span>
+                </Button>
+              ) : (
+                <>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <LogIn className="h-4 w-4" />
+                        <span>Увійти</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <AuthForms />
+                    </DialogContent>
+                  </Dialog>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm" className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" />
+                        <span>Зареєструватися</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <AuthForms />
+                    </DialogContent>
+                  </Dialog>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Mobile menu */}
@@ -120,6 +176,48 @@ const Navbar = () => {
                   );
                 })}
               </nav>
+
+              {/* Mobile auth buttons */}
+              <div className="mt-6 pt-6 border-t border-gray-100 px-5">
+                {user ? (
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2"
+                    onClick={() => signOut()}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Вийти</span>
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full flex items-center justify-center gap-2"
+                        >
+                          <LogIn className="h-4 w-4" />
+                          <span>Увійти</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <AuthForms />
+                      </DialogContent>
+                    </Dialog>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="w-full flex items-center justify-center gap-2">
+                          <UserPlus className="h-4 w-4" />
+                          <span>Зареєструватися</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <AuthForms />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+              </div>
 
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <p className="text-xs text-gray-500 px-5">© 2024 СвоЇ in CH</p>
