@@ -13,7 +13,6 @@ import {
   Info,
   LogIn,
   UserPlus,
-  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -23,14 +22,21 @@ import {
   SheetContent,
   SheetTrigger,
   SheetTitle,
-} from "@/app/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/app/components/ui/dialog";
+} from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/app/context/AuthContext";
 import { AuthForms } from "./auth/AuthForms";
+import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DefaultAvatar } from "./ui/default-avatar";
 
 // Define the menu item type
 type MenuItem = {
@@ -53,6 +59,12 @@ const menuItems: MenuItem[] = [
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+  };
 
   return (
     <nav className="bg-whte text-black py-4 sticky top-0 z-50 shadow-sm backdrop-blur-md">
@@ -90,15 +102,41 @@ const Navbar = () => {
             {/* Auth buttons */}
             <div className="flex items-center gap-2 ml-4">
               {user ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => signOut()}
-                  className="flex items-center gap-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Вийти</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-gray-100">
+                          <DefaultAvatar className="w-6 h-6" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user.user_metadata?.first_name}{" "}
+                          {user.user_metadata?.last_name}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push("/welcome")}>
+                      Мій аккаунт
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      Вийти
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <>
                   <Dialog>
@@ -180,14 +218,45 @@ const Navbar = () => {
               {/* Mobile auth buttons */}
               <div className="mt-6 pt-6 border-t border-gray-100 px-5">
                 {user ? (
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2"
-                    onClick={() => signOut()}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Вийти</span>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="relative h-8 w-8 rounded-full"
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-gray-100">
+                            <DefaultAvatar className="w-6 h-6" />
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-56"
+                      align="end"
+                      forceMount
+                    >
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {user.user_metadata?.first_name}{" "}
+                            {user.user_metadata?.last_name}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            {user.email}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => router.push("/welcome")}>
+                        Мій аккаунт
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut}>
+                        Вийти
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
                   <div className="space-y-3">
                     <Dialog>

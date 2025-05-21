@@ -19,6 +19,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/components/ui/tabs";
+import { subscribeToNewsletter } from "@/app/utils/beehiiv";
 
 export function AuthForms() {
   const { signIn, signUp, sendOTP, verifyOTP } = useAuth();
@@ -32,6 +33,7 @@ export function AuthForms() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [newsletterAccepted, setNewsletterAccepted] = useState(true);
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
 
@@ -45,6 +47,7 @@ export function AuthForms() {
       setLoading(true);
       setError("");
       const displayName = `${firstName} ${lastName}`.trim();
+
       // Create user with email and metadata
       await signUp(email, password, {
         data: {
@@ -52,8 +55,20 @@ export function AuthForms() {
           first_name: firstName,
           last_name: lastName,
           phone: `${countryCode}${phone}`,
+          newsletter_subscribed: newsletterAccepted,
         },
       });
+
+      // Subscribe to newsletter if accepted
+      if (newsletterAccepted) {
+        try {
+          await subscribeToNewsletter(email, firstName, lastName);
+        } catch (newsletterError) {
+          console.error("Newsletter subscription failed:", newsletterError);
+          // Don't block signup if newsletter subscription fails
+        }
+      }
+
       // Send OTP for phone verification
       await sendOTP(`${countryCode}${phone}`);
       setShowOtpVerification(true);
@@ -219,6 +234,18 @@ export function AuthForms() {
                     <a href="/terms" className="text-primary hover:underline">
                       умовами використання
                     </a>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="newsletter"
+                    checked={newsletterAccepted}
+                    onCheckedChange={(checked) =>
+                      setNewsletterAccepted(checked as boolean)
+                    }
+                  />
+                  <Label htmlFor="newsletter" className="text-sm">
+                    Я хочу отримувати новини на email
                   </Label>
                 </div>
                 <Button

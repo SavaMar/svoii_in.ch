@@ -5,6 +5,14 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
+type UserMetadata = {
+  display_name?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  newsletter_subscribed?: boolean;
+};
+
 type AuthContextType = {
   user: User | null;
   loading: boolean;
@@ -12,14 +20,7 @@ type AuthContextType = {
   signUp: (
     email: string,
     password: string,
-    metadata?: {
-      data: {
-        display_name: string;
-        first_name: string;
-        last_name: string;
-        phone: string;
-      };
-    }
+    metadata: { data: UserMetadata }
   ) => Promise<void>;
   signOut: () => Promise<void>;
   sendOTP: (phone: string) => Promise<void>;
@@ -59,21 +60,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (
     email: string,
     password: string,
-    metadata?: {
-      data: {
-        display_name: string;
-        first_name: string;
-        last_name: string;
-        phone: string;
-      };
-    }
+    metadata: { data: UserMetadata }
   ) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: metadata?.data,
+        data: metadata.data,
       },
     });
     if (error) throw error;
