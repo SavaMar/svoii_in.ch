@@ -33,7 +33,6 @@ export default function WelcomePage() {
         email_confirmed_at: user.email_confirmed_at,
         confirmed_at: user.confirmed_at,
         user_metadata: user.user_metadata,
-        raw_user_meta_data: user.raw_user_meta_data,
       });
     }
   }, [user]);
