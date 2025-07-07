@@ -1,14 +1,53 @@
-import { EditProfileClient } from "./EditProfileClient";
+"use client";
 
-export default async function EditProfilePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  
-  return <EditProfileClient id={id} />;
+import { useAuth } from "@/app/context/AuthContext";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Shield } from "lucide-react";
+
+interface UserProfile {
+  id: number;
+  user_id: string | null;
+  name: string | null;
+  email: string | null;
+  phone_number: string | null;
+  nickname: string | null;
+  gender: string | null;
+  date_of_birth: string | null;
+  nationality: string | null;
+  country_of_living: string | null;
+  city: string | null;
+  canton: string | null;
+  zip_code: string | null;
+  swiss_status: string | null;
+  avatar_url: string | null;
 }
+
+interface EditProfileClientProps {
+  id: string;
+}
+
+export function EditProfileClient({ id }: EditProfileClientProps) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [error, setError] = useState("");
+  const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -21,7 +60,7 @@ export default async function EditProfilePage({
         const { data, error } = await supabase
           .from("userprofile")
           .select("*")
-          .eq("id", params.id)
+          .eq("id", id)
           .single();
 
         if (error) throw error;
@@ -44,7 +83,7 @@ export default async function EditProfilePage({
     }
 
     loadProfile();
-  }, [user, params.id, supabase, router]);
+  }, [user, id, supabase, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +170,7 @@ export default async function EditProfilePage({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Ім&apos;я та прізвище</Label>
+            <Label htmlFor="name">Ім&apos;я та прізвище *</Label>
             <Input
               id="name"
               value={profile.name || ""}
@@ -176,21 +215,21 @@ export default async function EditProfilePage({
                 setProfile((prev) => ({ ...prev!, nickname: e.target.value }))
               }
             />
+            <p className="text-sm text-gray-500 mt-1">
+              Опціонально. Використовується для відображення в спільноті
+            </p>
           </div>
 
           <div>
-            <Label htmlFor="gender">
-              Стать {isNewUser && <span className="text-red-500">*</span>}
-            </Label>
+            <Label htmlFor="gender">Стать *</Label>
             <Select
               value={profile.gender || ""}
               onValueChange={(value) =>
                 setProfile((prev) => ({ ...prev!, gender: value }))
               }
-              required={isNewUser}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Виберіть стать" />
+                <SelectValue placeholder="Оберіть стать" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="male">Чоловіча</SelectItem>
@@ -201,29 +240,23 @@ export default async function EditProfilePage({
           </div>
 
           <div>
-            <Label htmlFor="date_of_birth">
-              Дата народження{" "}
-              {isNewUser && <span className="text-red-500">*</span>}
-            </Label>
+            <Label htmlFor="date_of_birth">Дата народження *</Label>
             <Input
               id="date_of_birth"
               type="date"
-              value={profile.date_of_birth?.split("T")[0] || ""}
+              value={profile.date_of_birth || ""}
               onChange={(e) =>
                 setProfile((prev) => ({
                   ...prev!,
                   date_of_birth: e.target.value,
                 }))
               }
-              required={isNewUser}
+              required
             />
           </div>
 
           <div>
-            <Label htmlFor="nationality">
-              Національність{" "}
-              {isNewUser && <span className="text-red-500">*</span>}
-            </Label>
+            <Label htmlFor="nationality">Національність *</Label>
             <Input
               id="nationality"
               value={profile.nationality || ""}
@@ -233,15 +266,12 @@ export default async function EditProfilePage({
                   nationality: e.target.value,
                 }))
               }
-              required={isNewUser}
+              required
             />
           </div>
 
           <div>
-            <Label htmlFor="country_of_living">
-              Країна проживання{" "}
-              {isNewUser && <span className="text-red-500">*</span>}
-            </Label>
+            <Label htmlFor="country_of_living">Країна проживання *</Label>
             <Input
               id="country_of_living"
               value={profile.country_of_living || ""}
@@ -251,21 +281,19 @@ export default async function EditProfilePage({
                   country_of_living: e.target.value,
                 }))
               }
-              required={isNewUser}
+              required
             />
           </div>
 
           <div>
-            <Label htmlFor="city">
-              Місто {isNewUser && <span className="text-red-500">*</span>}
-            </Label>
+            <Label htmlFor="city">Місто *</Label>
             <Input
               id="city"
               value={profile.city || ""}
               onChange={(e) =>
                 setProfile((prev) => ({ ...prev!, city: e.target.value }))
               }
-              required={isNewUser}
+              required
             />
           </div>
 
@@ -300,36 +328,43 @@ export default async function EditProfilePage({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Виберіть статус" />
+                <SelectValue placeholder="Оберіть статус" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="citizen">Громадянин</SelectItem>
-                <SelectItem value="permanent">Постійний резидент</SelectItem>
-                <SelectItem value="temporary">Тимчасовий резидент</SelectItem>
+                <SelectItem value="permanent_resident">
+                  Постійний резидент
+                </SelectItem>
+                <SelectItem value="temporary_resident">
+                  Тимчасовий резидент
+                </SelectItem>
+                <SelectItem value="student">Студент</SelectItem>
+                <SelectItem value="worker">Працівник</SelectItem>
                 <SelectItem value="other">Інший</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && (
+          <Alert className="bg-red-50 border-red-200">
+            <AlertDescription className="text-red-800">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
 
-        <div className="flex justify-end space-x-4">
-          {!isNewUser && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(`/profile`)}
-            >
-              Скасувати
-            </Button>
-          )}
-          <Button type="submit" disabled={saving}>
-            {saving
-              ? "Збереження..."
-              : isNewUser
-              ? "Завершити профіль"
-              : "Зберегти"}
+        <div className="flex gap-4">
+          <Button type="submit" disabled={saving} className="flex-1">
+            {saving ? "Збереження..." : "Зберегти"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/profile")}
+            className="flex-1"
+          >
+            Скасувати
           </Button>
         </div>
       </form>
