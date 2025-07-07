@@ -20,6 +20,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/app/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 // Instagram and Facebook icons as custom components
 const InstagramIcon = () => (
@@ -64,6 +66,8 @@ interface CommunityClientProps {
 }
 
 export default function CommunityClient({ members }: CommunityClientProps) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredMembers, setFilteredMembers] =
     useState<CommunityMember[]>(members);
@@ -165,12 +169,52 @@ export default function CommunityClient({ members }: CommunityClientProps) {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
+      {/* Hero section */}
+      <div className="mb-12 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-600 to-cyan-400 bg-clip-text text-transparent">
+          Наша спільнота
+        </h1>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Знайдіть однодумців, співпрацюйте та розвивайтеся разом
+        </p>
+      </div>
+
+      {/* Access message */}
+      <Card className="mb-8 p-8 bg-gradient-to-br from-indigo-50 via-cyan-50 to-white border-indigo-100 shadow-lg">
+        <div className="flex flex-col items-center text-center space-y-6">
+          <div className="max-w-2xl">
+            <h2 className="text-2xl font-semibold text-indigo-900 mb-3">
+              Доступ до спільноти
+            </h2>
+            <p className="text-gray-700 text-lg">
+              Створювати профайли чи бачити цю сторінку можуть лише ті, хто
+              перебуває фізично у Швейцарії.
+            </p>
+          </div>
+          {user ? (
+            <Button
+              className="w-full max-w-md bg-gradient-to-r from-indigo-600 to-cyan-500 text-white hover:from-indigo-700 hover:to-cyan-600 transition-all duration-200 shadow-md"
+              onClick={() => router.push("/profile")}
+            >
+              Створити профайл
+            </Button>
+          ) : (
+            <p className="text-sm text-gray-500">
+              Будь ласка, увійдіть до системи, щоб створити профайл
+            </p>
+          )}
+        </div>
+      </Card>
+
       {/* Top search and filters section */}
-      <Card className="mb-8 p-5">
+      <Card className="mb-8 p-6 bg-gradient-to-br from-cyan-50 to-white border-cyan-100 shadow-sm">
         <div className="flex flex-col space-y-4">
           {/* Search bar */}
           <div>
-            <h3 className="text-lg font-medium mb-2">Пошук</h3>
+            <h3 className="text-lg font-medium mb-2 flex items-center text-gray-700">
+              <Search className="h-4 w-4 mr-2 text-cyan-600" />
+              Пошук
+            </h3>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -184,19 +228,21 @@ export default function CommunityClient({ members }: CommunityClientProps) {
 
           {/* Filters */}
           <div>
-            <h3 className="text-lg font-medium mb-2 flex items-center">
-              <Filter className="h-4 w-4 mr-2" />
+            <h3 className="text-lg font-medium mb-2 flex items-center text-gray-700">
+              <Filter className="h-4 w-4 mr-2 text-cyan-600" />
               Фільтри
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Canton dropdown */}
               <div className="relative">
-                <h4 className="text-sm font-medium mb-2">Кантон</h4>
+                <h4 className="text-sm font-medium mb-2 text-gray-600">
+                  Кантон
+                </h4>
                 <div className="relative">
                   <button
                     type="button"
-                    className="flex justify-between items-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white text-left text-sm"
+                    className="flex justify-between items-center w-full rounded-md border border-gray-200 px-4 py-2 bg-white text-left text-sm hover:border-cyan-200 transition-colors"
                     onClick={() => setShowCantonDropdown(!showCantonDropdown)}
                   >
                     <span>
@@ -212,7 +258,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                       {cantons.map((canton) => (
                         <div
                           key={canton.code}
-                          className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          className="flex items-center px-4 py-2 hover:bg-cyan-50 cursor-pointer"
                           onClick={() => toggleCantonFilter(canton.code)}
                         >
                           <Checkbox
@@ -239,7 +285,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                       <Badge
                         key={canton}
                         variant="secondary"
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 bg-cyan-50 text-cyan-700 hover:bg-cyan-100"
                       >
                         {getCantonName(canton)}
                         <X
@@ -254,20 +300,22 @@ export default function CommunityClient({ members }: CommunityClientProps) {
 
               {/* Interests filter */}
               <div>
-                <h4 className="text-sm font-medium mb-2">Інтереси</h4>
+                <h4 className="text-sm font-medium mb-2 text-gray-600">
+                  Інтереси
+                </h4>
                 <div className="relative">
                   <Input
-                    placeholder="Введіть інтерес..."
+                    placeholder="Додати інтерес..."
                     value={interestInput}
                     onChange={handleInterestInput}
+                    className="mb-2"
                   />
-
                   {interestInput && filteredInterests.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md max-h-60 overflow-auto py-1 border border-gray-200">
+                    <div className="absolute z-10 w-full bg-white shadow-lg rounded-md max-h-60 overflow-auto py-1 border border-gray-200">
                       {filteredInterests.map((interest) => (
                         <div
                           key={interest}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          className="px-4 py-2 hover:bg-cyan-50 cursor-pointer"
                           onClick={() => addInterestFilter(interest)}
                         >
                           {interest}
@@ -284,7 +332,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                       <Badge
                         key={interest}
                         variant="secondary"
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 bg-cyan-50 text-cyan-700 hover:bg-cyan-100"
                       >
                         {interest}
                         <X
@@ -298,11 +346,14 @@ export default function CommunityClient({ members }: CommunityClientProps) {
               </div>
             </div>
 
-            {/* Reset button */}
             {(filters.kantons.length > 0 ||
               filters.interests.length > 0 ||
               searchQuery) && (
-              <Button variant="outline" onClick={resetFilters} className="mt-4">
+              <Button
+                variant="outline"
+                onClick={resetFilters}
+                className="mt-4 border-cyan-200 text-cyan-600 hover:bg-cyan-50"
+              >
                 Скинути всі фільтри
               </Button>
             )}
@@ -313,35 +364,39 @@ export default function CommunityClient({ members }: CommunityClientProps) {
       {/* Community members list */}
       <div className="w-full">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold flex items-center">
-            <UsersRound className="h-6 w-6 mr-2" />
-            Наша спільнота
+          <h2 className="text-2xl font-bold flex items-center text-gray-800">
+            <UsersRound className="h-6 w-6 mr-2 text-cyan-600" />
+            Учасники спільноти
           </h2>
           <p className="text-muted-foreground">
             {filteredMembers.length}{" "}
             {filteredMembers.length === 1 ? "учасник" : "учасників"}
           </p>
         </div>
-        <p className="text-red-600 max-w-3xl mx-auto text-center mb-12">
-          Всі учасники не справжніми і використовуються для тестування наразі.
-        </p>
 
         {filteredMembers.length === 0 ? (
-          <div className="text-center py-16 bg-muted/20 rounded-lg">
-            <p className="text-xl text-muted-foreground mb-2">
+          <div className="text-center py-16 bg-gradient-to-br from-cyan-50 to-white rounded-lg">
+            <p className="text-xl text-gray-600 mb-2">
               Не знайдено учасників за вашим запитом
             </p>
-            <Button variant="outline" onClick={resetFilters}>
+            <Button
+              variant="outline"
+              onClick={resetFilters}
+              className="border-cyan-200 text-cyan-600 hover:bg-cyan-50"
+            >
               Скинути всі фільтри
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredMembers.map((member) => (
-              <Card key={member.id} className="overflow-hidden">
-                <div className="p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-primary/10">
+              <Card
+                key={member.id}
+                className="overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-gradient-to-br from-cyan-100 to-white">
                       <Image
                         src={FALLBACK_AVATAR}
                         alt={member.firstName}
@@ -352,21 +407,21 @@ export default function CommunityClient({ members }: CommunityClientProps) {
 
                     <div className="flex-1">
                       <div className="flex items-center">
-                        <h3 className="font-medium">
+                        <h3 className="font-medium text-gray-900">
                           {member.firstName} {member.lastName}
                         </h3>
                         {member.isVerified && (
-                          <CheckCircle2 className="h-4 w-4 text-primary ml-1" />
+                          <CheckCircle2 className="h-4 w-4 text-cyan-600 ml-1" />
                         )}
                       </div>
 
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-gray-500">
                         {member.nickname && <span>@{member.nickname} • </span>}
                         <span>{getCantonName(member.kanton)}</span>
                       </div>
 
                       {member.bio && (
-                        <p className="text-sm mt-2 line-clamp-2">
+                        <p className="text-sm mt-2 line-clamp-2 text-gray-600">
                           {member.bio}
                         </p>
                       )}
@@ -379,7 +434,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                         <Badge
                           key={interest}
                           variant="secondary"
-                          className="text-xs cursor-pointer hover:bg-gray-200"
+                          className="text-xs cursor-pointer bg-cyan-50 text-cyan-700 hover:bg-cyan-100"
                           onClick={() => addInterestFilter(interest)}
                         >
                           {interest}
@@ -389,13 +444,12 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                   )}
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {/* Contact buttons - unchanged */}
                     {member.contacts?.email && (
                       <Button
                         size="sm"
                         variant="outline"
                         asChild
-                        className="h-8 gap-1"
+                        className="h-8 gap-1 border-cyan-200 text-cyan-600 hover:bg-cyan-50"
                       >
                         <a href={`mailto:${member.contacts.email}`}>
                           <Mail className="h-3.5 w-3.5" />
@@ -409,7 +463,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                         size="sm"
                         variant="outline"
                         asChild
-                        className="h-8 gap-1"
+                        className="h-8 gap-1 border-cyan-200 text-cyan-600 hover:bg-cyan-50"
                       >
                         <a
                           href={member.contacts.telegram}
@@ -427,7 +481,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                         size="sm"
                         variant="outline"
                         asChild
-                        className="h-8 gap-1"
+                        className="h-8 gap-1 border-cyan-200 text-cyan-600 hover:bg-cyan-50"
                       >
                         <a
                           href={member.contacts.instagram}
@@ -445,7 +499,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                         size="sm"
                         variant="outline"
                         asChild
-                        className="h-8 gap-1"
+                        className="h-8 gap-1 border-cyan-200 text-cyan-600 hover:bg-cyan-50"
                       >
                         <a
                           href={member.contacts.facebook}
@@ -465,7 +519,7 @@ export default function CommunityClient({ members }: CommunityClientProps) {
                         size="sm"
                         variant="outline"
                         asChild
-                        className="h-8 gap-1"
+                        className="h-8 gap-1 border-cyan-200 text-cyan-600 hover:bg-cyan-50"
                       >
                         <a
                           href={`tel:${

@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     metadata: { data: UserMetadata }
   ) => {
+    console.log("AuthContext: Signing up with metadata:", metadata);
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -113,8 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (updateError) throw updateError;
     }
 
-    // Redirect to welcome page after successful verification
-    router.push("/welcome");
+    // Redirect to profile page after successful verification
+    router.push("/profile");
   };
 
   return (

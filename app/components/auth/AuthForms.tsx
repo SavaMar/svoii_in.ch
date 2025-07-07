@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/app/context/AuthContext";
+
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -20,22 +20,24 @@ import {
   TabsTrigger,
 } from "@/app/components/ui/tabs";
 import { subscribeToNewsletter } from "@/app/utils/beehiiv";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export function AuthForms() {
-  const { signIn, signUp, sendOTP, verifyOTP } = useAuth();
+  const supabase = createClientComponentClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [countryCode, setCountryCode] = useState("+41");
-  const [otp, setOtp] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [newsletterAccepted, setNewsletterAccepted] = useState(true);
-  const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,30 +50,54 @@ export function AuthForms() {
       setError("");
       const displayName = `${firstName} ${lastName}`.trim();
 
+      console.log("Signing up with data:", {
+        email,
+        displayName,
+        firstName,
+        lastName,
+        newsletterAccepted,
+      });
+
       // Create user with email and metadata
-      await signUp(email, password, {
-        data: {
-          display_name: displayName,
-          first_name: firstName,
-          last_name: lastName,
-          phone: `${countryCode}${phone}`,
-          newsletter_subscribed: newsletterAccepted,
+      const { error: signUpError, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            display_name: displayName,
+            first_name: firstName,
+            last_name: lastName,
+            newsletter_subscribed: newsletterAccepted,
+          },
         },
       });
 
-      // Subscribe to newsletter if accepted
-      if (newsletterAccepted) {
-        try {
-          await subscribeToNewsletter(email, firstName, lastName);
-        } catch (newsletterError) {
-          console.error("Newsletter subscription failed:", newsletterError);
-          // Don't block signup if newsletter subscription fails
-        }
+      if (signUpError) {
+        console.error("Signup error:", signUpError);
+        throw signUpError;
       }
 
-      // Send OTP for phone verification
-      await sendOTP(`${countryCode}${phone}`);
-      setShowOtpVerification(true);
+      if (data.user) {
+        console.log("User created successfully:", data.user.id);
+
+        // Subscribe to newsletter if accepted
+        if (newsletterAccepted) {
+          try {
+            await subscribeToNewsletter(email, firstName, lastName);
+          } catch (newsletterError) {
+            console.error("Newsletter subscription failed:", newsletterError);
+            // Don't block signup if newsletter subscription fails
+          }
+        }
+
+        // Show email confirmation message and redirect to home
+        setEmailConfirmationSent(true);
+        // After showing the message, redirect to home after a delay
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 5000);
+      }
     } catch (err) {
       console.error("Signup error:", err);
       if (err instanceof Error) {
@@ -89,29 +115,88 @@ export function AuthForms() {
     try {
       setLoading(true);
       setError("");
-      await signIn(email, password);
-    } catch {
-      setError("Помилка входу. Перевірте ваші дані.");
+      console.log("Attempting to sign in with:", { email });
+
+      // First, sign in with email and password
+      const { error: signInError, data } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      if (data.user) {
+        console.log("Sign in successful, user:", data.user.id);
+
+        // Get user's phone number from metadata
+        const userPhone = data.user.user_metadata?.phone;
+
+        if (userPhone) {
+          // Send OTP for phone verification
+          const { error: otpError } = await supabase.auth.signInWithOtp({
+            phone: userPhone,
+          });
+
+          if (otpError) {
+            console.error("OTP sending failed:", otpError);
+            throw new Error("Не вдалося надіслати SMS код. Спробуйте ще раз.");
+          }
+
+          // Show OTP verification form
+          setShowOtpVerification(true);
+          setError(""); // Clear any previous errors
+        } else {
+          // No phone number, redirect to profile
+          console.log("No phone number found, redirecting to profile");
+          window.location.href = "/profile";
+        }
+      }
+    } catch (err) {
+      console.error("Sign in error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Помилка входу. Перевірте ваші дані.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) {
+      setError("Будь ласка, введіть ваш email");
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
-      const fullPhone = `${countryCode}${phone}`;
-      await verifyOTP(fullPhone, otp);
-      setShowOtpVerification(false);
-      setOtp("");
+
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        }
+      );
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      setResetEmailSent(true);
     } catch (err) {
-      console.error("OTP verification error:", err);
+      console.error("Password reset error:", err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Невірний код. Спробуйте ще раз.");
+        setError(
+          "Помилка відправки email для скидання пароля. Спробуйте ще раз."
+        );
       }
     } finally {
       setLoading(false);
@@ -135,53 +220,8 @@ export function AuthForms() {
             <TabsTrigger value="signup">Реєстрація</TabsTrigger>
           </TabsList>
           <TabsContent value="signin">
-            <form onSubmit={handleEmailSignin} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Пароль</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Завантаження..." : "Увійти"}
-              </Button>
-            </form>
-          </TabsContent>
-          <TabsContent value="signup">
-            {!showOtpVerification ? (
-              <form onSubmit={handleEmailSignup} className="space-y-4">
-                <div>
-                  <Label htmlFor="firstName">Ім&apos;я</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Прізвище</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
-                </div>
+            {!showForgotPassword && !showOtpVerification ? (
+              <form onSubmit={handleEmailSignin} className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -190,26 +230,25 @@ export function AuthForms() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity(
+                          "Будь ласка, введіть ваш email"
+                        );
+                      } else if (target.validity.typeMismatch) {
+                        target.setCustomValidity(
+                          "Будь ласка, введіть коректний email"
+                        );
+                      } else {
+                        target.setCustomValidity("");
+                      }
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("");
+                    }}
                   />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Номер телефону</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="countryCode"
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className="w-24"
-                      required
-                    />
-                    <Input
-                      id="phone"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="flex-1"
-                      required
-                    />
-                  </div>
                 </div>
                 <div>
                   <Label htmlFor="password">Пароль</Label>
@@ -219,6 +258,193 @@ export function AuthForms() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity(
+                        "Будь ласка, введіть ваш пароль"
+                      );
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("");
+                    }}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Завантаження..." : "Увійти"}
+                </Button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Я не памʼятаю свій пароль
+                  </button>
+                </div>
+              </form>
+            ) : !resetEmailSent ? (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Введіть ваш email, і ми надішлемо вам посилання для скидання
+                  пароля.
+                </p>
+                <div>
+                  <Label htmlFor="resetEmail">Email</Label>
+                  <Input
+                    id="resetEmail"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity(
+                          "Будь ласка, введіть ваш email"
+                        );
+                      } else if (target.validity.typeMismatch) {
+                        target.setCustomValidity(
+                          "Будь ласка, введіть коректний email"
+                        );
+                      } else {
+                        target.setCustomValidity("");
+                      }
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("");
+                    }}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Відправка..." : "Надіслати посилання"}
+                </Button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetEmailSent(false);
+                      setError("");
+                    }}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Повернутися до входу
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4 text-center">
+                <div className="text-green-600">
+                  <p className="font-medium">Email надіслано!</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Перевірте вашу пошту та перейдіть за посиланням для скидання
+                    пароля.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetEmailSent(false);
+                    setError("");
+                  }}
+                  className="w-full"
+                >
+                  Повернутися до входу
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="signup">
+            {!emailConfirmationSent ? (
+              <form onSubmit={handleEmailSignup} className="space-y-4">
+                <div>
+                  <Label htmlFor="firstName">Ім&apos;я</Label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("Будь ласка, введіть ваше ім'я");
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("");
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Прізвище</Label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity(
+                        "Будь ласка, введіть ваше прізвище"
+                      );
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("");
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Прізвище не буде показано публічно без вашого дозволу
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity(
+                          "Будь ласка, введіть ваш email"
+                        );
+                      } else if (target.validity.typeMismatch) {
+                        target.setCustomValidity(
+                          "Будь ласка, введіть коректний email"
+                        );
+                      } else {
+                        target.setCustomValidity("");
+                      }
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("");
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="password">Пароль</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity(
+                        "Будь ласка, введіть ваш пароль"
+                      );
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity("");
+                    }}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -257,24 +483,45 @@ export function AuthForms() {
                 </Button>
               </form>
             ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Ми надіслали код підтвердження на ваш телефон {countryCode}
-                  {phone}. Будь ласка, введіть його нижче.
-                </p>
-                <div>
-                  <Label htmlFor="otp">Код підтвердження</Label>
-                  <Input
-                    id="otp"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    required
-                  />
+              <div className="space-y-4 text-center">
+                <div className="text-green-600">
+                  <p className="font-medium">Реєстрація успішна!</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Ми надіслали лист підтвердження на вашу електронну пошту.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Будь ласка, перевірте:</strong>
+                  </p>
+                  <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+                    <li>
+                      • Вашу пошту та натисніть на посилання для підтвердження
+                    </li>
+                    <li>
+                      • Папку &quot;Спам&quot; або &quot;Небажана пошта&quot;
+                    </li>
+                  </ul>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Після підтвердження email ви зможете увійти в систему. Вас
+                    буде перенаправлено на головну сторінку через 5 секунд.
+                  </p>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Перевірка..." : "Підтвердити"}
+                <Button
+                  onClick={() => {
+                    setEmailConfirmationSent(false);
+                    setError("");
+                    // Reset form
+                    setEmail("");
+                    setPassword("");
+                    setFirstName("");
+                    setLastName("");
+                    setTermsAccepted(false);
+                    setNewsletterAccepted(true);
+                  }}
+                  className="w-full"
+                >
+                  Повернутися до реєстрації
                 </Button>
-              </form>
+              </div>
             )}
           </TabsContent>
         </Tabs>
