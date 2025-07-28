@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { validatePhoneNumber } from "@/app/utils/phoneValidation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +11,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Phone number, OTP, and user ID are required" },
         { status: 400 },
+      );
+    }
+
+    // Validate phone number
+    const validation = validatePhoneNumber(phone);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 403 },
       );
     }
 
@@ -47,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Check if OTP matches
     if (userOtp !== otp) {
       return NextResponse.json(
-        { error: "Invalid OTP code" },
+        { error: "Код введено не правильно" },
         { status: 400 },
       );
     }
@@ -60,6 +70,29 @@ export async function POST(request: NextRequest) {
     if (currentTime - otpTime > tenMinutes) {
       return NextResponse.json(
         { error: "OTP has expired. Please request a new code." },
+        { status: 400 },
+      );
+    }
+
+    // Check if phone number is already in use by another user before clearing OTP
+    const { data: existingProfile, error: profileError } = await supabase
+      .from("userprofile")
+      .select("user_id")
+      .eq("phone_number", phone)
+      .neq("user_id", userId)
+      .single();
+
+    if (profileError && profileError.code !== "PGRST116") { // PGRST116 is "not found"
+      console.error("Error checking phone number:", profileError);
+      return NextResponse.json(
+        { error: "Помилка перевірки номеру телефону" },
+        { status: 500 },
+      );
+    }
+
+    if (existingProfile) {
+      return NextResponse.json(
+        { error: "Цей номер телефону вже використовується іншим користувачем" },
         { status: 400 },
       );
     }

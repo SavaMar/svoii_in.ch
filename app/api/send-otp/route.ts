@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { validatePhoneNumber } from "@/app/utils/phoneValidation";
 
 import twilio from "twilio";
 
@@ -15,6 +16,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate phone number
+    const validation = validatePhoneNumber(phone);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 403 },
+      );
+    }
+
     // Verify user is authenticated
     const supabase = createRouteHandlerClient({ cookies });
     const { data: { user } } = await supabase.auth.getUser();
@@ -23,6 +33,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 },
+      );
+    }
+
+    // Check if phone number is already in use by another user
+    const { data: existingProfile, error: profileError } = await supabase
+      .from("userprofile")
+      .select("user_id")
+      .eq("phone_number", phone)
+      .neq("user_id", userId)
+      .single();
+
+    if (profileError && profileError.code !== "PGRST116") { // PGRST116 is "not found"
+      console.error("Error checking phone number:", profileError);
+      return NextResponse.json(
+        { error: "Помилка перевірки номеру телефону" },
+        { status: 500 },
+      );
+    }
+
+    if (existingProfile) {
+      return NextResponse.json(
+        { error: "Цей номер телефону вже використовується іншим користувачем" },
+        { status: 400 },
       );
     }
 

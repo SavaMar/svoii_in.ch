@@ -19,11 +19,21 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/components/ui/tabs";
-import { subscribeToNewsletter } from "@/app/utils/beehiiv";
+
+import { validatePhoneNumber } from "@/app/utils/phoneValidation";
+import {
+  validatePassword,
+  getPasswordStrengthColor,
+  getPasswordStrengthText,
+  getRequirementColor,
+  getRequirementIcon,
+} from "@/app/utils/passwordValidation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/navigation";
 
 export function AuthForms() {
   const supabase = createClientComponentClient();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -37,12 +47,29 @@ export function AuthForms() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({
+    isValid: false,
+    errors: [] as string[],
+    strength: "weak" as "weak" | "medium" | "strong",
+    requirements: [] as Array<{ text: string; isMet: boolean }>,
+  });
+  const [showPasswordRequirements, setShowPasswordRequirements] =
+    useState(false);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!termsAccepted) {
       setError("Будь ласка, прийміть умови використання");
+      return;
+    }
+
+    // Validate password
+    const validation = validatePassword(password);
+    if (!validation.isValid) {
+      setPasswordValidation(validation);
+      setShowPasswordRequirements(true);
       return;
     }
     try {
@@ -84,7 +111,41 @@ export function AuthForms() {
         // Subscribe to newsletter if accepted
         if (newsletterAccepted) {
           try {
-            await subscribeToNewsletter(email, firstName, lastName);
+            console.log("Attempting to subscribe to newsletter:", {
+              email,
+              firstName,
+              lastName,
+            });
+
+            const response = await fetch("/api/newsletter/subscribe", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                firstName,
+                lastName,
+              }),
+            });
+
+            const responseData = await response.json();
+            console.log("Newsletter subscription response:", {
+              status: response.status,
+              data: responseData,
+            });
+
+            if (!response.ok) {
+              console.error(
+                "Newsletter subscription failed:",
+                responseData.error
+              );
+            } else {
+              console.log(
+                "Successfully subscribed to newsletter:",
+                responseData
+              );
+            }
           } catch (newsletterError) {
             console.error("Newsletter subscription failed:", newsletterError);
             // Don't block signup if newsletter subscription fails
@@ -133,8 +194,16 @@ export function AuthForms() {
 
         // Get user's phone number from metadata
         const userPhone = data.user.user_metadata?.phone;
+        console.log("User metadata:", data.user.user_metadata);
+        console.log("User phone:", userPhone);
 
         if (userPhone) {
+          // Validate phone number
+          const validation = validatePhoneNumber(userPhone);
+          if (!validation.isValid) {
+            throw new Error(validation.error || "Invalid phone number");
+          }
+
           // Send OTP for phone verification
           const { error: otpError } = await supabase.auth.signInWithOtp({
             phone: userPhone,
@@ -149,9 +218,60 @@ export function AuthForms() {
           setShowOtpVerification(true);
           setError(""); // Clear any previous errors
         } else {
-          // No phone number, redirect to profile
-          console.log("No phone number found, redirecting to profile");
-          window.location.href = "/profile";
+          // No phone number, check if profile is complete
+          console.log("No phone number found, checking profile completion");
+
+          // Check if user profile is complete (with a small delay to ensure data is fresh)
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const { data: profile, error: profileError } = await supabase
+            .from("userprofile")
+            .select(
+              "gender, date_of_birth, nationality, country_of_living, city"
+            )
+            .eq("user_id", data.user.id)
+            .single();
+
+          console.log("Profile check result:", { profile, profileError });
+
+          if (profileError || !profile) {
+            console.log("No profile found, redirecting to profile");
+            window.location.href = "/profile";
+            return;
+          }
+
+          // Check if profile is complete
+          const isComplete = !!(
+            profile.gender &&
+            profile.date_of_birth &&
+            profile.nationality &&
+            profile.country_of_living &&
+            profile.city
+          );
+
+          console.log("Profile completion check:", {
+            gender: profile.gender,
+            date_of_birth: profile.date_of_birth,
+            nationality: profile.nationality,
+            country_of_living: profile.country_of_living,
+            city: profile.city,
+            isComplete,
+          });
+
+          // If profile is complete, redirect to home immediately
+          if (isComplete) {
+            console.log("Profile complete, redirecting to home");
+            router.push("/");
+            return;
+          }
+
+          if (!isComplete) {
+            console.log("Profile incomplete, redirecting to profile edit");
+            router.push("/profile/edit/new");
+          } else {
+            console.log("Profile complete, redirecting to home");
+            router.push("/");
+          }
         }
       }
     } catch (err) {
@@ -160,6 +280,104 @@ export function AuthForms() {
         setError(err.message);
       } else {
         setError("Помилка входу. Перевірте ваші дані.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = (newPassword: string) => {
+    setPassword(newPassword);
+    if (newPassword.length > 0) {
+      const validation = validatePassword(newPassword);
+      setPasswordValidation(validation);
+      setShowPasswordRequirements(true);
+    } else {
+      setPasswordValidation({
+        isValid: false,
+        errors: [],
+        strength: "weak",
+        requirements: [],
+      });
+      setShowPasswordRequirements(false);
+    }
+  };
+
+  const handleOtpVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode) {
+      setError("Будь ласка, введіть код підтвердження");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      // Get current user to get phone number
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+
+      // Verify OTP code
+      const { error: verifyError, data } = await supabase.auth.verifyOtp({
+        phone: currentUser?.user_metadata?.phone,
+        token: otpCode,
+        type: "sms",
+      });
+
+      if (verifyError) {
+        throw verifyError;
+      }
+
+      if (data.user) {
+        console.log("OTP verification successful, checking profile completion");
+
+        // Check if user profile is complete
+        const { data: profile, error: profileError } = await supabase
+          .from("userprofile")
+          .select("gender, date_of_birth, nationality, country_of_living, city")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (profileError || !profile) {
+          console.log("No profile found, redirecting to profile edit");
+          router.push("/profile/edit/new");
+          return;
+        }
+
+        // Check if profile is complete
+        const isComplete = !!(
+          profile.gender &&
+          profile.date_of_birth &&
+          profile.nationality &&
+          profile.country_of_living &&
+          profile.city
+        );
+
+        console.log("OTP verification - Profile completion check:", {
+          gender: profile.gender,
+          date_of_birth: profile.date_of_birth,
+          nationality: profile.nationality,
+          country_of_living: profile.country_of_living,
+          city: profile.city,
+          isComplete,
+        });
+
+        if (isComplete) {
+          console.log("Profile complete, redirecting to home");
+          router.push("/");
+        } else {
+          console.log("Profile incomplete, redirecting to profile");
+          router.push("/profile");
+        }
+      }
+    } catch (err) {
+      console.error("OTP verification error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Невірний код підтвердження. Спробуйте ще раз.");
       }
     } finally {
       setLoading(false);
@@ -180,7 +398,7 @@ export function AuthForms() {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         email,
         {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?type=password_recovery`,
         }
       );
 
@@ -334,6 +552,43 @@ export function AuthForms() {
                   </button>
                 </div>
               </form>
+            ) : showOtpVerification ? (
+              <form onSubmit={handleOtpVerification} className="space-y-4">
+                <div className="text-center mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    Ми надіслали SMS код на ваш номер телефону. Введіть код для
+                    підтвердження.
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="otp">Код підтвердження</Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="Введіть 6-значний код"
+                    maxLength={6}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Перевірка..." : "Підтвердити"}
+                </Button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOtpVerification(false);
+                      setOtpCode("");
+                      setError("");
+                    }}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Повернутися до входу
+                  </button>
+                </div>
+              </form>
             ) : (
               <div className="space-y-4 text-center">
                 <div className="text-green-600">
@@ -433,7 +688,7 @@ export function AuthForms() {
                     id="password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
                     required
                     onInvalid={(e) => {
                       const target = e.target as HTMLInputElement;
@@ -446,6 +701,44 @@ export function AuthForms() {
                       target.setCustomValidity("");
                     }}
                   />
+                  {(showPasswordRequirements ||
+                    !passwordValidation.isValid ||
+                    password.length > 0) && (
+                    <div
+                      className={`mt-2 space-y-2 ${!passwordValidation.isValid ? "p-3 border border-red-200 rounded-md bg-red-50" : ""}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-sm font-medium ${getPasswordStrengthColor(
+                            passwordValidation.strength
+                          )}`}
+                        >
+                          Сила пароля:{" "}
+                          {getPasswordStrengthText(passwordValidation.strength)}
+                        </span>
+                      </div>
+                      <div
+                        className={`text-xs space-y-1 ${!passwordValidation.isValid ? "text-red-600" : "text-gray-600"}`}
+                      >
+                        <p className="font-medium">Вимоги до пароля:</p>
+                        <ul className="space-y-1">
+                          {passwordValidation.requirements?.map(
+                            (requirement, index) => (
+                              <li
+                                key={index}
+                                className={`flex items-center gap-2 ${getRequirementColor(requirement.isMet)}`}
+                              >
+                                <span className="font-bold">
+                                  {getRequirementIcon(requirement.isMet)}
+                                </span>
+                                {requirement.text}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox

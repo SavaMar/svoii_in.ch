@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import { validatePhoneNumber } from "@/app/utils/phoneValidation";
 
 type UserMetadata = {
   display_name?: string;
@@ -81,6 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const sendOTP = async (phone: string) => {
+    // Validate phone number
+    const validation = validatePhoneNumber(phone);
+    if (!validation.isValid) {
+      throw new Error(validation.error || "Invalid phone number");
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
       phone,
     });
@@ -88,6 +95,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyOTP = async (phone: string, otp: string) => {
+    // Validate phone number
+    const validation = validatePhoneNumber(phone);
+    if (!validation.isValid) {
+      throw new Error(validation.error || "Invalid phone number");
+    }
+
     const { error } = await supabase.auth.verifyOtp({
       phone,
       token: otp,
