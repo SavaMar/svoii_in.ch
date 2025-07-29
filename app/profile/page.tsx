@@ -14,11 +14,31 @@ import {
   Pencil,
   AlertTriangle,
   Lock,
+  CheckCircle,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AvatarUpload } from "@/app/components/AvatarUpload";
 import { Separator } from "@/components/ui/separator";
 import { COUNTRIES, CANTONS, SWISS_STATUSES } from "@/app/utils/constants";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  validatePhoneNumber,
+  getSortedCountries,
+} from "@/app/utils/phoneValidation";
 
 interface UserProfile {
   id: number;
@@ -46,6 +66,16 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+
+  // Phone update modal state
+  const [showPhoneUpdate, setShowPhoneUpdate] = useState(false);
+  const [newPhone, setNewPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+41");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+  const [phoneSuccess, setPhoneSuccess] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -136,6 +166,182 @@ export default function ProfilePage() {
     } catch (err) {
       console.error("Error updating avatar:", err);
     }
+  };
+
+  const handleSendPhoneOtp = async () => {
+    if (!newPhone.trim()) {
+      setPhoneError("Будь ласка, введіть номер телефону");
+      return;
+    }
+
+    const fullPhone = `${countryCode}${newPhone}`;
+
+    // Check if it's the same phone number as current
+    if (profile?.phone_number === fullPhone) {
+      setPhoneError("Цей номер телефону вже встановлений у вашому профілі");
+      return;
+    }
+
+    // Validate phone number
+    const validation = validatePhoneNumber(fullPhone);
+    if (!validation.isValid) {
+      setPhoneError(validation.error || "Невірний формат номеру телефону");
+      return;
+    }
+
+    try {
+      setPhoneLoading(true);
+      setPhoneError("");
+
+      // Check if phone number is already used by another user
+      const { data: existingUser, error: checkError } = await supabase
+        .from("userprofile")
+        .select("user_id")
+        .eq("phone_number", fullPhone)
+        .neq("user_id", user?.id)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116 is "not found"
+        console.error("Error checking phone number:", checkError);
+        setPhoneError("Помилка перевірки номеру телефону");
+        return;
+      }
+
+      if (existingUser) {
+        setPhoneError(
+          "Цей номер телефону вже використовується іншим користувачем"
+        );
+        return;
+      }
+
+      const response = await fetch("/api/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: fullPhone,
+          userId: user?.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Помилка відправки коду");
+      }
+
+      setShowOtpInput(true);
+      setPhoneError("");
+    } catch (err) {
+      console.error("Send OTP error:", err);
+      if (err instanceof Error) {
+        setPhoneError(err.message);
+      } else {
+        setPhoneError("Помилка відправки коду. Спробуйте ще раз.");
+      }
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (!phoneOtp.trim()) {
+      setPhoneError("Будь ласка, введіть код підтвердження");
+      return;
+    }
+
+    const fullPhone = `${countryCode}${newPhone}`;
+
+    try {
+      setPhoneLoading(true);
+      setPhoneError("");
+
+      // Double-check if phone number is still available (in case another user claimed it)
+      const { data: existingUser, error: checkError } = await supabase
+        .from("userprofile")
+        .select("user_id")
+        .eq("phone_number", fullPhone)
+        .neq("user_id", user?.id)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116 is "not found"
+        console.error("Error checking phone number:", checkError);
+        setPhoneError("Помилка перевірки номеру телефону");
+        return;
+      }
+
+      if (existingUser) {
+        setPhoneError(
+          "Цей номер телефону вже використовується іншим користувачем"
+        );
+        return;
+      }
+
+      const response = await fetch("/api/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: fullPhone,
+          otp: phoneOtp,
+          userId: user?.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Помилка перевірки коду");
+      }
+
+      // Update profile with new phone number
+      if (profile) {
+        const { error: updateError } = await supabase
+          .from("userprofile")
+          .update({ phone_number: fullPhone })
+          .eq("id", profile.id);
+
+        if (updateError) throw updateError;
+
+        // Update local state
+        setProfile((prev) =>
+          prev ? { ...prev, phone_number: fullPhone } : null
+        );
+      }
+
+      setPhoneSuccess(true);
+      setTimeout(() => {
+        setShowPhoneUpdate(false);
+        setPhoneSuccess(false);
+        setShowOtpInput(false);
+        setNewPhone("");
+        setPhoneOtp("");
+        setPhoneError("");
+      }, 2000);
+    } catch (err) {
+      console.error("Verify OTP error:", err);
+      if (err instanceof Error) {
+        setPhoneError(err.message);
+      } else {
+        setPhoneError("Помилка перевірки коду. Спробуйте ще раз.");
+      }
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const resetPhoneModal = () => {
+    setShowPhoneUpdate(false);
+    setPhoneSuccess(false);
+    setShowOtpInput(false);
+    setNewPhone("");
+    setPhoneOtp("");
+    setPhoneError("");
+    setCountryCode("+41");
   };
 
   if (loading) {
@@ -250,20 +456,30 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/50 border border-gray-100">
-                <Phone className="w-5 h-5 text-cyan-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Телефон</p>
-                  <p className="font-medium">
-                    {profile?.phone_number || "Не вказано"}
-                  </p>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <Phone className="w-5 h-5 text-cyan-600 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-gray-500">Телефон</p>
+                    <p className="font-medium truncate">
+                      {profile?.phone_number || "Не вказано"}
+                    </p>
+                  </div>
                 </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setShowPhoneUpdate(true)}
+                  className="text-cyan-600 hover:text-cyan-700 p-0 h-auto ml-4 flex-shrink-0"
+                >
+                  Змінити
+                </Button>
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
-                <div className="flex items-center space-x-3">
-                  <Lock className="w-5 h-5 text-cyan-600" />
-                  <div>
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <Lock className="w-5 h-5 text-cyan-600 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-500">Пароль</p>
                     <p className="font-medium">••••••••</p>
                   </div>
@@ -272,7 +488,7 @@ export default function ProfilePage() {
                   variant="link"
                   size="sm"
                   onClick={() => router.push("/reset-password")}
-                  className="text-cyan-600 hover:text-cyan-700 p-0 h-auto"
+                  className="text-cyan-600 hover:text-cyan-700 p-0 h-auto ml-4 flex-shrink-0"
                 >
                   Змінити
                 </Button>
@@ -398,6 +614,148 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+
+      {/* Phone Update Modal */}
+      <Dialog open={showPhoneUpdate} onOpenChange={setShowPhoneUpdate}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Оновлення номеру телефону</DialogTitle>
+          </DialogHeader>
+
+          {phoneSuccess ? (
+            <div className="space-y-4">
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Номер телефону успішно оновлено!
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {!showOtpInput ? (
+                <>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="countryCode">Код країни</Label>
+                      <Select
+                        value={countryCode}
+                        onValueChange={setCountryCode}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getSortedCountries().map((country) => (
+                            <SelectItem key={country.code} value={country.code}>
+                              {country.flag} {country.name} ({country.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="newPhone">Номер телефону</Label>
+                      <div className="flex items-center space-x-2">
+                        <div className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded-md border">
+                          {countryCode}
+                        </div>
+                        <Input
+                          id="newPhone"
+                          type="tel"
+                          value={newPhone}
+                          onChange={(e) => setNewPhone(e.target.value)}
+                          placeholder="789 123 456"
+                          required
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Введіть номер без коду країни (наприклад: 789 123 456)
+                      </p>
+                    </div>
+
+                    {phoneError && (
+                      <Alert className="bg-red-50 border-red-200">
+                        <AlertDescription className="text-red-800">
+                          {phoneError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSendPhoneOtp}
+                        disabled={phoneLoading}
+                        className="flex-1"
+                      >
+                        {phoneLoading ? "Відправка..." : "Відправити код"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={resetPhoneModal}
+                        disabled={phoneLoading}
+                      >
+                        Скасувати
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="phoneOtp">Код підтвердження</Label>
+                      <Input
+                        id="phoneOtp"
+                        type="text"
+                        value={phoneOtp}
+                        onChange={(e) => setPhoneOtp(e.target.value)}
+                        placeholder="Введіть код з SMS"
+                        maxLength={6}
+                        required
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        Код відправлено на номер{" "}
+                        <span className="font-medium">
+                          {countryCode}
+                          {newPhone}
+                        </span>
+                      </p>
+                    </div>
+
+                    {phoneError && (
+                      <Alert className="bg-red-50 border-red-200">
+                        <AlertDescription className="text-red-800">
+                          {phoneError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleVerifyPhoneOtp}
+                        disabled={phoneLoading}
+                        className="flex-1"
+                      >
+                        {phoneLoading ? "Перевірка..." : "Підтвердити"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowOtpInput(false)}
+                        disabled={phoneLoading}
+                      >
+                        Назад
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
