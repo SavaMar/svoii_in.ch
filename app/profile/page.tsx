@@ -6,7 +6,15 @@ import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Mail, Phone, User, Pencil, AlertTriangle } from "lucide-react";
+import {
+  Shield,
+  Mail,
+  Phone,
+  User,
+  Pencil,
+  AlertTriangle,
+  Lock,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AvatarUpload } from "@/app/components/AvatarUpload";
 import { Separator } from "@/components/ui/separator";
@@ -250,6 +258,24 @@ export default function ProfilePage() {
                     {profile?.phone_number || "Не вказано"}
                   </p>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <Lock className="w-5 h-5 text-cyan-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Пароль</p>
+                    <p className="font-medium">••••••••</p>
+                  </div>
+                </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => router.push("/reset-password")}
+                  className="text-cyan-600 hover:text-cyan-700 p-0 h-auto"
+                >
+                  Змінити
+                </Button>
               </div>
             </CardContent>
           </Card>

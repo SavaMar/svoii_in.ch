@@ -68,6 +68,7 @@ const Navbar = () => {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const supabase = createClientComponentClient();
 
@@ -191,7 +192,7 @@ const Navbar = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Dialog>
+                <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="w-full bg-gradient-to-r from-indigo-700 to-cyan-500 text-white hover:from-indigo-700 hover:via-indigo-600 hover:to-teal-500 transition-aserll duration-200 shadow-md flex items-center gap-2">
                       <User className="h-4 w-4" />
@@ -205,7 +206,7 @@ const Navbar = () => {
                     <DialogDescription className="sr-only">
                       Введіть свої облікові дані для входу в систему
                     </DialogDescription>
-                    <AuthForms />
+                    <AuthForms onClose={() => setAuthDialogOpen(false)} />
                   </DialogContent>
                 </Dialog>
               )}
@@ -319,7 +320,10 @@ const Navbar = () => {
                   </DropdownMenu>
                 ) : (
                   <div className="space-y-3">
-                    <Dialog>
+                    <Dialog
+                      open={authDialogOpen}
+                      onOpenChange={setAuthDialogOpen}
+                    >
                       <DialogTrigger asChild>
                         <Button className="w-full bg-gradient-to-r from-indigo-700 to-cyan-500 text-white hover:from-indigo-700 hover:via-indigo-600 hover:to-teal-500 transition-all duration-200 shadow-md flex items-center gap-2">
                           <User className="h-4 w-4" />
@@ -327,7 +331,7 @@ const Navbar = () => {
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-md">
-                        <AuthForms />
+                        <AuthForms onClose={() => setAuthDialogOpen(false)} />
                       </DialogContent>
                     </Dialog>
                   </div>

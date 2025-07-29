@@ -31,7 +31,11 @@ import {
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 
-export function AuthForms() {
+interface AuthFormsProps {
+  onClose?: () => void;
+}
+
+export function AuthForms({ onClose }: AuthFormsProps) {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -494,7 +498,10 @@ export function AuthForms() {
                 <div className="text-center">
                   <button
                     type="button"
-                    onClick={() => setShowForgotPassword(true)}
+                    onClick={() => {
+                      onClose?.();
+                      router.push("/forgot-password");
+                    }}
                     className="text-sm text-primary hover:underline"
                   >
                     Я не памʼятаю свій пароль
