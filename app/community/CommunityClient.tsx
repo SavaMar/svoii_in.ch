@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CommunityMember, CommunityFilterOptions } from "./types";
-import { getCantonName, getAllCantons, CantonCode } from "../utils/cantons";
+import { CommunityMember, CommunityFilterOptions } from "@/app/community/types";
+import { getCantonName, getAllCantons, CantonCode } from "@/app/utils/cantons";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

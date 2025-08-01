@@ -1,4 +1,4 @@
-import { CantonCode } from "../utils/cantons";
+import { CantonCode } from "@/app/utils/cantons";
 
 export type Interest =
   | "хайкінг"

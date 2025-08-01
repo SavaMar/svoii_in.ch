@@ -12,6 +12,9 @@ import {
   Mail,
   User,
   Info,
+  Search,
+  Settings,
+  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -55,6 +58,7 @@ type MenuItem = {
 
 // Define menu items once to avoid duplication
 const menuItems: MenuItem[] = [
+  { href: "/search", icon: Search, label: "Пошук" },
   { href: "/events", icon: Calendar, label: "Події" },
   { href: "/community", icon: Users, label: "Спільнота" },
   { href: "/carriers", icon: Truck, label: "Перевізники" },
@@ -223,12 +227,13 @@ const Navbar = () => {
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="bg-white text-gray-800 border-gray-100 w-[250px] sm:w-[300px]"
+              className="bg-white text-gray-800 border-gray-100 w-[280px] sm:w-[320px] max-w-[85vw]"
             >
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
 
-              <div className="flex items-center gap-3 mb-6 mt-6 px-4">
-                <div className="w-10 h-10 relative">
+              {/* Header section */}
+              <div className="flex items-center gap-3 mb-4 mt-4 px-4">
+                <div className="w-8 h-8 relative">
                   <Image
                     src="/logo.png"
                     alt="SVOЇ Logo"
@@ -237,12 +242,40 @@ const Navbar = () => {
                     unoptimized
                   />
                 </div>
-                <span className="font-semibold text-xl">СвоЇ in CH</span>
+                <span className="font-semibold text-lg">СвоЇ in CH</span>
               </div>
 
-              <div className="border-b border-gray-200 w-full mb-6 shadow-sm"></div>
+              {/* User info section - show when logged in */}
+              {user && (
+                <div className="mb-4 px-4">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        {avatarUrl ? (
+                          <AvatarImage src={avatarUrl} alt="User avatar" />
+                        ) : (
+                          <AvatarFallback className="bg-blue-100">
+                            <DefaultAvatar className="w-6 h-6" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm truncate">
+                          {user.user_metadata?.first_name}{" "}
+                          {user.user_metadata?.last_name}
+                        </p>
+                        <p className="text-xs text-gray-600 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              <nav className="flex flex-col gap-3">
+              <div className="border-b border-gray-200 w-full mb-4"></div>
+
+              <nav className="flex flex-col gap-1 px-2">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -250,96 +283,76 @@ const Navbar = () => {
                       key={item.href}
                       href={item.href}
                       onClick={handleLinkClick}
-                      className="flex items-center gap-3 text-lg hover:text-indigo-600 transition-colors py-3 px-5 rounded-lg hover:bg-gray-50"
+                      className="flex items-center gap-3 text-base hover:text-indigo-600 transition-colors py-2.5 px-3 rounded-lg hover:bg-gray-50"
                     >
-                      <Icon className="h-5 w-5 text-indigo-500" />
+                      <Icon className="h-4 w-4 text-indigo-500" />
                       <span>{item.label}</span>
                     </Link>
                   );
                 })}
               </nav>
 
-              {/* Mobile auth buttons */}
-              <div className="mt-6 pt-6 border-t border-gray-100 px-5">
-                {user ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="relative h-8 w-8 rounded-full"
-                      >
-                        <Avatar className="h-8 w-8">
-                          {avatarUrl ? (
-                            <AvatarImage src={avatarUrl} alt="User avatar" />
-                          ) : (
-                            <AvatarFallback className="bg-gray-100">
-                              <DefaultAvatar className="w-6 h-6" />
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="w-56"
-                      align="end"
-                      forceMount
-                    >
-                      <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">
-                            {user.user_metadata?.first_name}{" "}
-                            {user.user_metadata?.last_name}
-                          </p>
-                          <p className="text-xs leading-none text-muted-foreground">
-                            {user.email}
-                          </p>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => {
-                          router.push("/profile");
-                          setIsOpen(false);
-                        }}
-                      >
-                        Мій профіль
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          router.push("/welcome");
-                          setIsOpen(false);
-                        }}
-                      >
-                        Налаштування
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleSignOut}>
-                        Вийти
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <div className="space-y-3">
-                    <Dialog
-                      open={authDialogOpen}
-                      onOpenChange={setAuthDialogOpen}
-                    >
-                      <DialogTrigger asChild>
-                        <Button className="w-full bg-gradient-to-r from-indigo-700 to-cyan-500 text-white hover:from-indigo-700 hover:via-indigo-600 hover:to-teal-500 transition-all duration-200 shadow-md flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          Увійти
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <AuthForms onClose={() => setAuthDialogOpen(false)} />
-                      </DialogContent>
-                    </Dialog>
+              {/* Profile section for logged in users */}
+              {user && (
+                <div className="border-t border-gray-100 pt-3 mt-2">
+                  <div className="px-3 mb-2">
+                    <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      Мій акаунт
+                    </h3>
                   </div>
-                )}
-              </div>
+                  <div className="flex flex-col gap-1 px-2">
+                    <Link
+                      href="/profile"
+                      onClick={handleLinkClick}
+                      className="flex items-center gap-3 text-base hover:text-indigo-600 transition-colors py-2.5 px-3 rounded-lg hover:bg-gray-50"
+                    >
+                      <User className="h-4 w-4 text-indigo-500" />
+                      <span>Мій профіль</span>
+                    </Link>
+                    <Link
+                      href="/welcome"
+                      onClick={handleLinkClick}
+                      className="flex items-center gap-3 text-base hover:text-indigo-600 transition-colors py-2.5 px-3 rounded-lg hover:bg-gray-50"
+                    >
+                      <Settings className="h-4 w-4 text-indigo-500" />
+                      <span>Налаштування</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-3 text-base hover:text-red-600 transition-colors py-2.5 px-3 rounded-lg hover:bg-red-50 text-left w-full"
+                    >
+                      <LogOut className="h-4 w-4 text-red-500" />
+                      <span>Вийти</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <p className="text-xs text-gray-500 px-5">© 2024 СвоЇ in CH</p>
+              {/* Mobile auth buttons - only show login for non-authenticated users */}
+              {!user && (
+                <div className="mt-4 pt-4 border-t border-gray-100 px-3">
+                  <Dialog
+                    open={authDialogOpen}
+                    onOpenChange={setAuthDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button className="w-full bg-gradient-to-r from-indigo-700 to-cyan-500 text-white hover:from-indigo-700 hover:via-indigo-600 hover:to-teal-500 transition-all duration-200 shadow-md flex items-center gap-2 py-2.5 text-sm">
+                        <User className="h-4 w-4" />
+                        Увійти
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <AuthForms onClose={() => setAuthDialogOpen(false)} />
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
+
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <p className="text-xs text-gray-500 px-3">© 2024 СвоЇ in CH</p>
               </div>
             </SheetContent>
           </Sheet>

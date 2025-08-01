@@ -3,14 +3,31 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, MapPin, ExternalLink, Ticket } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Ticket,
+  Bookmark,
+  Users,
+  MessageCircle,
+  Heart,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useAuth } from "@/app/context/AuthContext";
 import { mockEvents, EVENT_CATEGORIES, CANTONS } from "./mockData";
 
 export default function EventsClient() {
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     canton: "all",
     zipCode: "",
@@ -18,6 +35,8 @@ export default function EventsClient() {
   });
 
   const [filteredEvents, setFilteredEvents] = useState(mockEvents);
+  const [showCommunityDialog, setShowCommunityDialog] = useState(false);
+  const [showDevelopmentDialog, setShowDevelopmentDialog] = useState(false);
 
   // Filter events based on selected filters
   useEffect(() => {
@@ -60,6 +79,31 @@ export default function EventsClient() {
       zipCode: "",
       category: "all",
     });
+  };
+
+  // Handle button clicks
+  const handleSaveEvent = () => {
+    if (!user) {
+      setShowCommunityDialog(true);
+    } else {
+      setShowDevelopmentDialog(true);
+    }
+  };
+
+  const handleAttendEvent = () => {
+    if (!user) {
+      setShowCommunityDialog(true);
+    } else {
+      setShowDevelopmentDialog(true);
+    }
+  };
+
+  const handleJoinChat = () => {
+    if (!user) {
+      setShowCommunityDialog(true);
+    } else {
+      setShowDevelopmentDialog(true);
+    }
   };
 
   // Format date range for display
@@ -189,8 +233,17 @@ export default function EventsClient() {
             {filteredEvents.map((event) => (
               <Card
                 key={event.id}
-                className="h-full overflow-hidden transition-all duration-300 hover:shadow-md group"
+                className="h-full overflow-hidden transition-all duration-300 hover:shadow-md group flex flex-col relative"
               >
+                {/* Clickable overlay for the entire card */}
+                <a
+                  href={event.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 z-10"
+                  aria-label={`Відкрити деталі події: ${event.name}`}
+                />
+
                 <div className="relative h-48 w-full overflow-hidden">
                   <Image
                     src={event.imageUrl}
@@ -213,7 +266,7 @@ export default function EventsClient() {
                   )}
                 </div>
 
-                <div className="p-5">
+                <div className="p-5 flex-1 flex flex-col">
                   <div className="flex flex-wrap gap-1 mb-3">
                     {event.categories.map((category) => (
                       <Badge
@@ -248,22 +301,66 @@ export default function EventsClient() {
                         {event.canton}
                       </span>
                     </div>
+
+                    {/* Organizer information for some events */}
+                    {event.organizer && (
+                      <div className="flex items-start">
+                        <Users className="h-4 w-4 text-indigo-700 mt-1 mr-2 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">
+                          Організатор:{" "}
+                          <a
+                            href={event.organizer.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-600 hover:text-indigo-800 underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {event.organizer.name}
+                          </a>
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-3 flex-1">
                     {event.description}
                   </p>
 
-                  <div className="flex justify-end">
-                    <a
-                      href={event.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm"
+                  {/* Event Action Buttons - Always at bottom */}
+                  <div className="space-y-2 mt-auto relative z-20">
+                    {/* Зберігти button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSaveEvent}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs border-gray-300 hover:bg-gray-50 text-gray-700"
                     >
-                      Подробиці
-                      <ExternalLink className="h-3.5 w-3.5 ml-1" />
-                    </a>
+                      <Bookmark className="h-3.5 w-3.5" />
+                      Зберігти
+                      <span className="text-gray-500">(12)</span>
+                    </Button>
+
+                    {/* Я хочу йти button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAttendEvent}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs border-gray-300 hover:bg-gray-50 text-gray-700"
+                    >
+                      <Heart className="h-3.5 w-3.5" />Я хочу йти
+                      <span className="text-gray-500">(8)</span>
+                    </Button>
+
+                    {/* Долучитися до чату button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleJoinChat}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs border-gray-300 hover:bg-gray-50 text-gray-700"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      Долучитися до чату
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -287,6 +384,69 @@ export default function EventsClient() {
           Додати захід
         </Link>
       </div>
+
+      {/* Community Dialog */}
+      <Dialog open={showCommunityDialog} onOpenChange={setShowCommunityDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+              <DialogTitle className="text-xl font-semibold">
+                Частина спільноти
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-base leading-relaxed">
+              Ця функція доступна тільки для членів спільноти. Приєднайтеся до
+              нас, щоб отримати повний доступ до всіх можливостей.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+            <Button
+              onClick={() => setShowCommunityDialog(false)}
+              variant="outline"
+              className="flex-1"
+            >
+              Закрити
+            </Button>
+            <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
+              Приєднатися до спільноти
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Development Dialog */}
+      <Dialog
+        open={showDevelopmentDialog}
+        onOpenChange={setShowDevelopmentDialog}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-orange-100 rounded-full">
+                <Calendar className="h-6 w-6 text-orange-600" />
+              </div>
+              <DialogTitle className="text-xl font-semibold">
+                В розробці
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-base leading-relaxed">
+              Ця функція знаходиться в розробці і буде доступна найближчим
+              часом. Дякуємо за ваше терпіння!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end mt-6">
+            <Button
+              onClick={() => setShowDevelopmentDialog(false)}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Зрозуміло
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
