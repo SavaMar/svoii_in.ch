@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Montserrat_Alternates } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
+import { AuthProvider } from "./context/AuthContext";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,10 +41,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${montserratAlternates.variable} font-sans antialiased min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-        <Analytics />
+        <AuthProvider>
+          <Navbar />
+          <main className="flex-grow">{children}</main>
+          <Footer />
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   );
