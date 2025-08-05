@@ -113,7 +113,14 @@ function ResourceCard({
         {address && (
           <div className="mb-3">
             <p className="text-sm text-gray-500 font-medium">Адреса:</p>
-            <p className="text-sm text-gray-700">{address}</p>
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 underline hover:text-blue-800"
+            >
+              {address}
+            </a>
           </div>
         )}
         {!address && (
