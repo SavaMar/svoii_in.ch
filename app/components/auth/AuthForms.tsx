@@ -106,59 +106,35 @@ export function AuthForms({ onClose }: AuthFormsProps) {
 
       if (signUpError) {
         console.error("Signup error:", signUpError);
-        throw signUpError;
+        // Check for duplicate email error (Supabase returns code 'user_already_exists' or similar)
+        if (
+          signUpError.message?.toLowerCase().includes("user already registered") ||
+          signUpError.message?.toLowerCase().includes("user already exists") ||
+          signUpError.message?.toLowerCase().includes("email already registered") ||
+          signUpError.status === 400
+        ) {
+          setError("Цей email вже зареєстровано. Будь ласка, увійдіть у свій акаунт.");
+          setLoading(false);
+          return;
+        }
+        setError("Помилка реєстрації. Спробуйте ще раз.");
+        setLoading(false);
+        return;
       }
 
+      // Only show success if there was NO error and a user was created
       if (data.user) {
-        console.log("User created successfully:", data.user.id);
-
         // Subscribe to newsletter if accepted
         if (newsletterAccepted) {
           try {
-            console.log("Attempting to subscribe to newsletter:", {
-              email,
-              firstName,
-              lastName,
-            });
-
-            const response = await fetch("/api/newsletter/subscribe", {
+            await fetch("/api/newsletter/subscribe", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email,
-                firstName,
-                lastName,
-              }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, firstName, lastName }),
             });
-
-            const responseData = await response.json();
-            console.log("Newsletter subscription response:", {
-              status: response.status,
-              data: responseData,
-            });
-
-            if (!response.ok) {
-              console.error(
-                "Newsletter subscription failed:",
-                responseData.error
-              );
-            } else {
-              console.log(
-                "Successfully subscribed to newsletter:",
-                responseData
-              );
-            }
-          } catch (newsletterError) {
-            console.error("Newsletter subscription failed:", newsletterError);
-            // Don't block signup if newsletter subscription fails
-          }
+          } catch {}
         }
-
-        // Show email confirmation message and redirect to home
         setEmailConfirmationSent(true);
-        // After showing the message, redirect to home after a delay
         setTimeout(() => {
           window.location.href = "/";
         }, 5000);

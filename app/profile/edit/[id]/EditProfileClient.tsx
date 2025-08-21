@@ -60,35 +60,55 @@ export function EditProfileClient({ id }: EditProfileClientProps) {
     async function loadProfile() {
       try {
         if (id === "new") {
-          // Create a new profile for the current user
-          const newProfile: Omit<UserProfile, "id"> = {
-            user_id: user?.id,
-            name: `${user?.user_metadata?.first_name || ""} ${
-              user?.user_metadata?.last_name || ""
-            }`.trim(),
-            email: user?.email || "",
-            phone_number: user?.user_metadata?.phone || "",
-            nickname: null,
-            gender: null,
-            date_of_birth: null,
-            nationality: null,
-            country_of_living: null,
-            city: null,
-            canton: null,
-            zip_code: null,
-            swiss_status: null,
-            avatar_url: null,
-          };
-
-          const { data: insertedData, error: insertError } = await supabase
+          // First check if user already has a profile with phone number
+          const { data: existingProfile, error: profileError } = await supabase
             .from("userprofile")
-            .insert([newProfile])
-            .select()
+            .select("*")
+            .eq("user_id", user.id)
             .single();
 
-          if (insertError) throw insertError;
-          setProfile(insertedData);
-          setIsNewUser(true);
+          if (profileError && profileError.code !== "PGRST116") {
+            // PGRST116 is "not found"
+            throw profileError;
+          }
+
+          if (existingProfile) {
+            // User already has a profile, use it
+            console.log("Found existing profile:", existingProfile);
+            console.log("Phone number in profile:", existingProfile.phone_number);
+            setProfile(existingProfile);
+            setIsNewUser(false);
+          } else {
+            // Create a new profile for the current user
+            const newProfile: Omit<UserProfile, "id"> = {
+              user_id: user?.id,
+              name: `${user?.user_metadata?.first_name || ""} ${
+                user?.user_metadata?.last_name || ""
+              }`.trim(),
+              email: user?.email || "",
+              phone_number: "", // Will be filled from userprofile if exists
+              nickname: null,
+              gender: null,
+              date_of_birth: null,
+              nationality: null,
+              country_of_living: null,
+              city: null,
+              canton: null,
+              zip_code: null,
+              swiss_status: null,
+              avatar_url: null,
+            };
+
+            const { data: insertedData, error: insertError } = await supabase
+              .from("userprofile")
+              .insert([newProfile])
+              .select()
+              .single();
+
+            if (insertError) throw insertError;
+            setProfile(insertedData);
+            setIsNewUser(true);
+          }
         } else {
           // Load existing profile
           const { data, error } = await supabase

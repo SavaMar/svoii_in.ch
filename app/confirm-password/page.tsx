@@ -57,6 +57,7 @@ export default function ConfirmEmailPage() {
         userId: currentUser?.id,
         email: currentUser?.email,
         passwordSet: currentUser?.user_metadata?.password_set,
+        emailConfirmedAt: currentUser?.email_confirmed_at,
       });
 
       if (!currentUser) {
@@ -66,7 +67,17 @@ export default function ConfirmEmailPage() {
 
       // Check if user has already set a password
       if (currentUser.user_metadata?.password_set) {
-        setError("Пароль вже встановлено для цього облікового запису.");
+        setError("Пароль вже встановлено для цього облікового запису. Вас буде перенаправлено на підтвердження телефону.");
+        setTimeout(() => {
+          router.push("/phone-verification");
+        }, 2000);
+        return;
+      }
+
+      // Check if user just confirmed their email and should go to phone verification
+      if (currentUser.email_confirmed_at && !currentUser.user_metadata?.password_set) {
+        console.log("User just confirmed email, redirecting to phone verification");
+        router.push("/phone-verification");
         return;
       }
 
@@ -74,7 +85,7 @@ export default function ConfirmEmailPage() {
     };
 
     checkUser();
-  }, [supabase]);
+  }, [supabase, router]);
 
   const handlePasswordChange = (newPassword: string) => {
     setPassword(newPassword);
@@ -138,10 +149,9 @@ export default function ConfirmEmailPage() {
       }
 
       setSuccess(true);
-
-      // Redirect to profile after 3 seconds
+      // Redirect to phone verification after 3 seconds
       setTimeout(() => {
-        router.push("/profile");
+        router.push("/phone-verification");
       }, 3000);
     } catch (err) {
       console.error("Password confirmation error:", err);

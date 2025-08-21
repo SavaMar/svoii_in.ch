@@ -212,6 +212,8 @@ export default function PhoneVerificationPage() {
       }
 
       // Update the userprofile database with the verified phone number
+      console.log("Updating userprofile with phone number:", fullPhone, "for user:", user?.id);
+      
       const { error: updateError } = await supabase
         .from("userprofile")
         .update({ phone_number: fullPhone })
@@ -249,8 +251,38 @@ export default function PhoneVerificationPage() {
         }
       }
 
+      // Verify that the phone number was saved correctly
+      console.log("Phone number saved successfully:", fullPhone);
+      
+      // Double-check that the phone number is in the database
+      const { data: verifyData, error: verifyError } = await supabase
+        .from("userprofile")
+        .select("phone_number")
+        .eq("user_id", user?.id)
+        .single();
+
+      if (verifyError) {
+        console.error("Error verifying phone number save:", verifyError);
+        throw new Error("Помилка перевірки збереження номеру телефону");
+      }
+
+      if (verifyData?.phone_number !== fullPhone) {
+        console.error("Phone number verification failed:", {
+          expected: fullPhone,
+          actual: verifyData?.phone_number
+        });
+        throw new Error("Помилка збереження номеру телефону");
+      }
+
+      console.log("Phone number verified in database:", verifyData.phone_number);
+
       // Show success message
       setPhoneVerified(true);
+      
+      // Automatically redirect to profile edit after successful phone verification
+      setTimeout(() => {
+        router.push("/profile/edit/new");
+      }, 2000);
     } catch (err) {
       console.error("OTP verification error:", err);
       if (err instanceof Error) {
@@ -379,6 +411,9 @@ export default function PhoneVerificationPage() {
             <div className="space-y-2">
               <p className="text-sm text-gray-600">
                 Тепер ви можете використовувати всі функції платформи.
+              </p>
+              <p className="text-sm text-gray-600">
+                Вас буде автоматично перенаправлено на сторінку редагування профілю через кілька секунд.
               </p>
             </div>
 
