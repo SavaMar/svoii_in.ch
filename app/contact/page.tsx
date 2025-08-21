@@ -6,6 +6,7 @@ import {
   MessageCircle,
   ArrowRight,
   CheckCircle,
+  Users,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ContactForm from "./ContactForm";
@@ -121,64 +122,231 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* FAQ Section */}
+      {/* Benefits Section */}
       <div className="mt-16">
-        <h2 className="text-2xl font-bold mb-8 text-center">Часті запитання</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <h2 className="text-2xl font-bold mb-8 text-center">
+          Можливості для різних груп користувачів
+        </h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Для членів спільноти */}
           <Card className="p-6 transition-all duration-300 ease-in-out hover:shadow-md">
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-              Як я можу стати членом спільноти?
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-blue-600">
+              <Users className="h-6 w-6 mr-3" />
+              Для членів спільноти
             </h3>
-            <p className="text-gray-600">
-              Щоб стати членом нашої спільноти, вам потрібно зареєструватися на
-              сайті та заповнити профіль. Після цього вам будуть доступні всі
-              функції та можливості.{" "}
-              <span className="text-red-700">
-                Але прямо зараз ця можливість у процесі розробки
-              </span>
+            <p className="text-gray-600 mb-4">
+              Бачити людей які у Швейцарії, писати про свої інтереси, знаходити
+              людей по інтересах, створювати події на основі інтересів:
             </p>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Хайкінг у гори
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Скетчінг у музеї
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Поїздки на фестиваль
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Кататися на лижах разом
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Настільні ігри
+              </li>
+            </ul>
           </Card>
+
+          {/* Для благодійних організацій */}
           <Card className="p-6 transition-all duration-300 ease-in-out hover:shadow-md">
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-              Чи є членські внески?
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-purple-600">
+              <MessageCircle className="h-6 w-6 mr-3" />
+              Для благодійних організацій
             </h3>
-            <p className="text-gray-600">
-              Ні, реєстрація та членство у нашій спільноті абсолютно
-              безкоштовні. Однак, ми приймаємо добровільні пожертви для розвитку
-              проєкту.{" "}
-              <span className="text-red-700">
-                Але реклама своїх послуг (4chf), превізників (8chf) та тури
-                (10chf) є платною на основі що місячної підписки
-              </span>
-            </p>
+            <p className="text-gray-600 mb-4">На нашому ресурсі ви зможете:</p>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Додати свою організацію
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Додавати події
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Створювати форму для пошуку волонтерів або пропонувати роботу
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Отримувати запити для того щоб вступити або підтримати вашу
+                організацію
+              </li>
+            </ul>
           </Card>
+
+          {/* Для бізнесів */}
           <Card className="p-6 transition-all duration-300 ease-in-out hover:shadow-md">
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-              Як додати свій бізнес до каталогу?
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-green-600">
+              <div className="h-6 w-6 mr-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+              </div>
+              Для бізнесів
             </h3>
-            <p className="text-gray-600">
-              Щоб додати свій бізнес чи послугу до нашого каталогу, будь ласка,
-              <s>заповніть форму вище </s> або зв&apos;яжіться з нами через
-              телеграм чи імейл. Після перевірки інформації ваш бізнес буде
-              додано.
-            </p>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Ви можете додати свій бізнес
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                У перспективі створювати події
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Бачити аналітику переглядів та динаміку подачі на ваші події
+              </li>
+            </ul>
           </Card>
+
+          {/* Для самозайнятих */}
           <Card className="p-6 transition-all duration-300 ease-in-out hover:shadow-md">
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-              Як я можу допомогти розвивати спільноту?
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-orange-600">
+              <div className="h-6 w-6 mr-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              Для самозайнятих
             </h3>
-            <p className="text-gray-600">
-              Ви можете допомогти нам, поширюючи інформацію про спільноту серед
-              друзів, беручи участь у заходах, надаючи зворотній зв&apos;язок
-              або ставши волонтером. Зв&apos;яжіться з нами для більш детальної
-              інформації.
-            </p>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Чудова можливість прорекламувати свої послуги
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Можливість бачити аналітику
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                Можливість створювати онлайн/офлайн події
+              </li>
+            </ul>
+          </Card>
+
+          {/* Для перевізників */}
+          <Card className="p-6 transition-all duration-300 ease-in-out hover:shadow-md lg:col-span-2">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-red-600">
+              <div className="h-6 w-6 mr-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M1 3h15v13H1z" />
+                  <path d="M16 8h4l3 3v5h-7V8z" />
+                </svg>
+              </div>
+              Для перевізників
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold mb-3 text-gray-800">
+                  Поточні можливості:
+                </h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    Можливість відділити себе від потоку сміття і скаму, бо
+                    нажаль, перевізники на сьогодні асоціюються із скамом та
+                    шахраями
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    Я знаю що перевізники також час від часу страждають від
+                    людей які бронюють і не приходять - ми спробуємо це питання
+                    мінімізувати
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-3 text-gray-800">
+                  У перспективі:
+                </h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    Можливість створювати поїздки
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    "Чисте" ім'я
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    Бачити аналітику та потреби людей
+                  </li>
+                </ul>
+              </div>
+            </div>
           </Card>
         </div>
+
+        {/* Future Vision */}
+        <Card className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <h3 className="text-xl font-semibold mb-4 flex items-center text-blue-800">
+            <div className="h-6 w-6 mr-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            </div>
+            У перспективі
+          </h3>
+          <p className="text-gray-700">
+            Якщо проєкт виросте, то я зможу наймати людей на цей проєкт та
+            створити фонд з якого гроші будуть раз на певний період
+            відправлятися на ЗСУ, але це все якщо проєкт цей переживе всі хвилі
+            становлення 😊
+          </p>
+        </Card>
       </div>
     </div>
   );

@@ -76,6 +76,12 @@ export const CANTONS = [
   { code: "JU", name: "Юра" },
 ];
 
+// Organizer type definition
+export interface Organizer {
+  name: string;
+  website: string;
+}
+
 // Event type definition
 export interface Event {
   id: string;
@@ -94,6 +100,7 @@ export interface Event {
   website: string;
   isFree: boolean;
   price?: string | null;
+  organizer?: Organizer;
 }
 
 // Mock events data
@@ -117,6 +124,10 @@ export const mockEvents: Event[] = [
     website: "https://ukrainian-festival.ch",
     isFree: false,
     price: "15 CHF",
+    organizer: {
+      name: "Українська Спільнота Цюриха",
+      website: "https://ukrainian-community-zurich.ch",
+    },
   },
   {
     id: "2",
@@ -157,6 +168,10 @@ export const mockEvents: Event[] = [
     website: "https://vhszh.ch",
     isFree: true,
     price: null,
+    organizer: {
+      name: "Volkshochschule Zürich",
+      website: "https://vhszh.ch",
+    },
   },
   {
     id: "4",

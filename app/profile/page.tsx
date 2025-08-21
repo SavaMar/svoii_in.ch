@@ -77,6 +77,9 @@ export default function ProfilePage() {
   const [phoneError, setPhoneError] = useState("");
   const [phoneSuccess, setPhoneSuccess] = useState(false);
 
+  // Swiss phone modal state
+  const [showSwissPhoneModal, setShowSwissPhoneModal] = useState(false);
+
   useEffect(() => {
     if (!user) {
       router.push("/");
@@ -612,6 +615,70 @@ export default function ProfilePage() {
                 )}
             </CardContent>
           </Card>
+
+          {/* Action Buttons - Only show if profile is complete */}
+          {!isProfileIncomplete && (
+            <Card className="bg-gradient-to-br from-white to-gray-50 border-gray-100 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="w-5 h-5 text-cyan-600" />
+                  Дії
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Find Friends Button - Only for Swiss residents */}
+                  {profile?.country_of_living === "switzerland" && (
+                    <Button
+                      onClick={() => {
+                        // Check if user has Swiss phone number
+                        if (profile?.phone_number?.startsWith("+41")) {
+                          router.push("/community");
+                        } else {
+                          setShowSwissPhoneModal(true);
+                        }
+                      }}
+                      className="w-full h-12 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+                    >
+                      Знайти друзів
+                    </Button>
+                  )}
+
+                  {/* Service Provider Button */}
+                  <Button
+                    onClick={() => router.push("/services")}
+                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                  >
+                    Я хочу надавати послуги
+                  </Button>
+
+                  {/* Carrier Button */}
+                  <Button
+                    onClick={() => router.push("/carriers")}
+                    className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
+                  >
+                    Я перевізник
+                  </Button>
+
+                  {/* Organization Button */}
+                  <Button
+                    onClick={() => router.push("/organizations")}
+                    className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white"
+                  >
+                    Я організація
+                  </Button>
+
+                  {/* Business Button */}
+                  <Button
+                    onClick={() => router.push("/business")}
+                    className="w-full h-12 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white"
+                  >
+                    Я Бізнес
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -754,6 +821,52 @@ export default function ProfilePage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Swiss Phone Modal */}
+      <Dialog open={showSwissPhoneModal} onOpenChange={setShowSwissPhoneModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              Швейцарський номер телефону потрібен
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription className="text-blue-800">
+                Для участі в онлайн-спільноті, створення офлайн-подій та
+                знаходження друзів, вам потрібно проживати в Швейцарії та мати
+                швейцарський номер телефону (+41).
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">
+                Будь ласка, оновіть ваш номер телефону на швейцарський номер
+                (+41) у розділі &quot;Контактна інформація&quot; вище.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setShowSwissPhoneModal(false);
+                  setShowPhoneUpdate(true);
+                }}
+                className="flex-1"
+              >
+                Оновити номер телефону
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowSwissPhoneModal(false)}
+              >
+                Скасувати
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
